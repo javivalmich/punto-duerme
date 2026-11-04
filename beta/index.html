@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Punto Duerme (beta)</title>
+<meta name="description" content="Punto Duerme, el juego del pueblo que duerme: cada uno con su móvil y un móvil que hace de narrador con voz. Un juego de Punto Studio.">
+<meta name="theme-color" content="#0b0b0d">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Punto Duerme">
+<meta name="application-name" content="Punto Duerme">
+<meta name="format-detection" content="telephone=no">
+<link rel="preload" href="fonts/outfit-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/estilo.css?v=1">
+<script src="vendor/qrcode/qrcode.js" defer></script>
+<script type="module" src="js/app.js?v=1"></script>
+</head>
+<body>
+<div id="betaTag">BETA</div>
+
+<!-- Portada -->
+<section class="screen on" id="s-home">
+  <div class="wrap">
+    <div class="hero">
+      <img class="logo" src="img/logo.webp" alt="" width="250" height="250">
+      <h1 class="title">PUNTO DUERME</h1>
+      <p class="tag">CAE LA NOCHE · ALGUIEN NO DUERME</p>
+    </div>
+    <p class="lead">Cada uno con su móvil. Uno hace de narrador y pone la voz.</p>
+    <button class="act" id="hVolver" hidden></button>
+    <button class="act" data-a="crear">Crear partida</button>
+    <button class="act sec" data-a="unir">Unirme</button>
+    <div class="panel">
+      <details>
+        <summary>Cómo se juega</summary>
+        <ol class="steps">
+          <li>Quien crea la partida es el <b>narrador</b>: su móvil pone la voz. Puede jugar también o dejarlo en el centro.</li>
+          <li>Cada uno mira en secreto su papel: <b>Punto</b> (los asesinos) o <b>Ciego</b> (el pueblo).</li>
+          <li>De noche todos miran su móvil y tocan a alguien: los Puntos eligen a su víctima y los Ciegos marcan de quién sospechan.</li>
+          <li>De día, el narrador cuenta quién ha muerto, se debate y se vota a quién echar del pueblo.</li>
+          <li>Ganan los Ciegos si no queda ningún Punto; los Puntos, si llegan a ser tantos como los Ciegos.</li>
+        </ol>
+      </details>
+    </div>
+    <div class="acct"></div>
+    <p class="legal"><a href="soporte.html">Soporte</a> · <a href="/privacidad/">Privacidad</a> · <a href="terminos.html">Términos</a></p>
+  </div>
+</section>
+
+<!-- Crear partida -->
+<section class="screen" id="s-crear">
+  <div class="wrap">
+    <button class="back" data-a="inicio">‹ Volver</button>
+    <h2>Nueva partida</h2>
+    <label class="lbl" for="crNom">Tu nombre</label>
+    <input class="field" id="crNom" maxlength="16" autocomplete="nickname" placeholder="Cómo te verán los demás">
+    <div class="panel" id="crAjustes"></div>
+    <p class="err" id="crErr" role="alert"></p>
+    <button class="act" id="crGo">Crear sala</button>
+  </div>
+</section>
+
+<!-- Unirme -->
+<section class="screen" id="s-unir">
+  <div class="wrap">
+    <button class="back" data-a="inicio">‹ Volver</button>
+    <h2>Unirme</h2>
+    <p class="hint-line">Escribe el código que ves en el móvil del narrador.</p>
+    <input class="codein" id="unCod" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" aria-label="Código de la partida">
+    <label class="lbl" for="unNom" style="display:block;margin-top:14px">Tu nombre</label>
+    <input class="field" id="unNom" maxlength="16" autocomplete="nickname" placeholder="Cómo te verán los demás">
+    <p class="err" id="unErr" role="alert"></p>
+    <button class="act" id="unGo">Entrar</button>
+  </div>
+</section>
+
+<!-- Sala de espera -->
+<section class="screen" id="s-sala">
+  <div class="wrap">
+    <div class="gtop"><h2>Sala de espera</h2><div class="right"><button class="menubtn" id="saSalir" aria-label="Salir de la sala">✕</button></div></div>
+    <div class="codebox">
+      <div class="code" id="saCod"></div>
+      <div class="qr" id="saQr"></div>
+      <button class="act sec" id="saCompartir">Compartir enlace</button>
+    </div>
+    <div class="panel"><div class="plist" id="saLista"></div></div>
+    <div class="panel" id="saAjustes"></div>
+    <p class="hostnote" id="saNota"></p>
+    <button class="act" id="saEmpezar" hidden>Empezar</button>
+    <div class="acct"></div>
+  </div>
+</section>
+
+<!-- Partida -->
+<section class="screen" id="s-juego">
+  <div class="wrap game">
+    <div class="gtop">
+      <div class="who"><span class="fasenom" id="jFase"></span><b class="cuenta" data-cuenta></b></div>
+      <div class="right">
+        <button class="menubtn" id="jMudo" hidden aria-label="Silenciar narrador"></button>
+        <button class="menubtn" id="jMenu" aria-label="Menú">☰</button>
+      </div>
+    </div>
+    <div id="jAviso"></div>
+    <div id="jNarra" class="narra" aria-live="polite"></div>
+    <div id="jFijo"></div>
+    <div id="jVivo"></div>
+  </div>
+</section>
+
+<!-- Editor de personaje (de Punto Ciego) -->
+<div id="editor" role="dialog" aria-modal="true" aria-labelledby="edTit" hidden>
+  <div class="ed-in">
+    <button class="back" id="edVolver">‹ Volver</button>
+    <h2 id="edTit">Tu personaje</h2>
+    <p class="ed-sub" id="edSub"></p>
+    <div class="ed-pegado"><div class="ed-vista" id="edVista"></div><p class="ed-tip" id="edTip">Arrastra el personaje para girarlo</p></div>
+    <label class="lbl" for="edNom">Nombre de jugador</label>
+    <input class="field" id="edNom" maxlength="16" autocomplete="off" placeholder="Cómo te verán los demás">
+    <div id="edFilas"></div>
+    <p class="err" id="edErr" role="alert"></p>
+    <button class="act" id="edGuardar">Guardar cambios</button>
+    <button class="link" id="edCancelar">Cancelar</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+</body>
+</html>

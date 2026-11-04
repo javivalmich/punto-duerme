@@ -1,0 +1,4 @@
+Outfit — Copyright 2021 The Outfit Project Authors (https://github.com/Outfitio/Outfit-Fonts)
+
+Licensed under the SIL Open Font License, Version 1.1. This license is available with a FAQ at https://openfontlicense.org
+El archivo outfit-latin.woff2 es el subconjunto latino de la fuente variable Outfit (pesos 400-900), alojado aquí para no cargar nada desde Google Fonts.
