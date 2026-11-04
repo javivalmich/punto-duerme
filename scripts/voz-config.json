@@ -1,0 +1,13 @@
+{
+  "modelo": "gemini-3.8-flash-tts",
+  "voz": "Riko",
+  "temperature": 1,
+  "instruccion": "Lee el siguiente texto como un narrador nativo de Madrid, en español de España con acento castellano, sin ningún acento extranjero, pronunciando la c y la z como en España. Tono de narrador de cuento de misterio: voz grave, lenta, con pausas dramáticas:",
+  "estilos": {
+    "rich": "Style: Rich, velvety, unhurried audiobook narration setting an atmospheric evening scene.",
+    "hushed": "Style: Hushed, whispered, intimate night-time narration, as if trying not to wake anyone. Slow, with long suspenseful pauses.",
+    "tense": "Style: Tense, grave, suspenseful narration. Low, tight voice with dramatic pauses before the key words."
+  },
+  "segundos_entre_llamadas": 8,
+  "en_espera": ["noche_elegid", "noche_10s", "debate_30s", "votacion_10s"]
+}

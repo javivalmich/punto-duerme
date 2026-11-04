@@ -2,6 +2,7 @@
    dispositivo. Solo habla el móvil que hace de narrador. Si está silenciado o el navegador no tiene voz,
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
+import { TEXTOS } from './textos-narrador.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0 };
@@ -31,16 +32,57 @@ function eligeVoz() {
 window.addEventListener('online', () => eligeVoz()); window.addEventListener('offline', () => eligeVoz());
 if (SS) { eligeVoz(); SS.addEventListener && SS.addEventListener('voiceschanged', eligeVoz) }
 
+/* ---------- Voz buena: audios pregrabados (audio/voz/<id>-<n>.mp3, índice en indice.json) ----------
+   Se localizan por el texto de la frase (las frases ya no llevan nombres ni tiempos). Si falta cualquier audio, habla la voz del navegador. */
+const A = new Audio();
+let INDICE = null;
+const BLOBS = new Map();
+const FRASES = [];
+for (const id in TEXTOS) TEXTOS[id].forEach((t, i) => FRASES.push({ clip: id + '-' + (i + 1), t }));
+FRASES.sort((a, b) => b.t.length - a.t.length);
+fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
+function clipsDe(texto) {
+  if (!INDICE) return null;
+  let r = String(texto || '').trim(); const out = [];
+  while (r) {
+    const f = FRASES.find(x => r.startsWith(x.t) && INDICE.has(x.clip)); if (!f) return null;
+    out.push(f.clip); r = r.slice(f.t.length).replace(/^\s*\|\s*/, '');
+  }
+  return out;
+}
+/* Se descarga como blob (así el service worker lo sirve de su caché sin conexión y no hay problemas de «Range» en iOS) */
+function cargaClip(c) {
+  if (!BLOBS.has(c)) BLOBS.set(c, fetch('audio/voz/' + c + '.mp3').then(r => { if (!r.ok) throw new Error('clip'); return r.blob() }).then(b => URL.createObjectURL(b)).catch(e => { BLOBS.delete(c); throw e }));
+  return BLOBS.get(c);
+}
+export function precargaVoz() { if (INDICE) INDICE.forEach(c => cargaClip(c).catch(() => { })); else setTimeout(precargaVoz, 1500) }
+function reproduce(clips, vale, fin, fallo) {
+  let i = 0;
+  const sig = async () => {
+    if (!vale()) return;
+    if (i >= clips.length) return fin();
+    try {
+      A.src = await cargaClip(clips[i++]);
+      if (!vale()) return;
+      A.onended = () => setTimeout(sig, 350); A.onerror = fallo;
+      await A.play();
+    } catch (e) { if (vale()) fallo() }
+  };
+  sig();
+}
+
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
 export function desbloquea() {
+  desbloqueaAudio();
   if (!SS) return;
   try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'es-ES'; SS.speak(u) } catch (e) { }
 }
+export function desbloqueaAudio() { try { A.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; A.play().catch(() => { }) } catch (e) { } }
 export function silencia(on) {
   VOZ.mudo = !!on; lsSet('mudo', VOZ.mudo);
-  if (VOZ.mudo && SS) try { SS.cancel() } catch (e) { }
+  if (VOZ.mudo) { try { A.pause() } catch (e) { } if (SS) try { SS.cancel() } catch (e) { } }
 }
-export function calla() { VOZ.cola++; if (SS) try { SS.cancel() } catch (e) { } }
+export function calla() { VOZ.cola++; try { A.pause() } catch (e) { } if (SS) try { SS.cancel() } catch (e) { } }
 
 const dura = t => Math.max(1200, t.replace(/\|/g, '').length * 62);
 
@@ -53,6 +95,15 @@ export function di(texto, fin) {
   /* respaldo: si el navegador no avisa del final (pasa en pestañas de fondo), se sigue igualmente */
   const respaldo = setTimeout(acaba, dura(texto) * 1.8 + 3000);
   const fin2 = () => { clearTimeout(respaldo); acaba() };
+  const clips = !VOZ.mudo && clipsDe(texto);
+  if (clips && clips.length) {
+    clearTimeout(respaldo); const r2 = setTimeout(acaba, 90000);
+    try { SS && SS.cancel() } catch (e) { }
+    reproduce(clips, () => yo === VOZ.cola, () => { clearTimeout(r2); acaba() }, () => { clearTimeout(r2); setTimeout(acaba, dura(texto) * 1.8 + 3000); hablaNavegador() });
+    return;
+  }
+  hablaNavegador();
+  function hablaNavegador() {
   if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { clearTimeout(respaldo); setTimeout(acaba, dura(texto)); return }
   try { SS.cancel() } catch (e) { }
   let i = 0;
@@ -66,5 +117,6 @@ export function di(texto, fin) {
     try { SS.speak(u) } catch (e) { setTimeout(sig, 100) }
   };
   sig();
+  }
 }
 export const hayVoz = () => !!SS;

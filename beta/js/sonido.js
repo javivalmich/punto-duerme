@@ -1,7 +1,7 @@
 /* Sonidos: solo suenan en el móvil del narrador (si sonaran en el de cada jugador, podrían delatar
    quién está haciendo algo). Son archivos de audio/ con nombres claros; los actuales son provisionales:
    para cambiarlos, sustituye el archivo (o cambia aquí la ruta si cambia la extensión). */
-import { VOZ } from './narrador.js';
+import { VOZ, precargaVoz } from './narrador.js';
 
 export const SONIDOS = {
   noche: 'audio/noche.wav',              // cae la noche
@@ -23,6 +23,7 @@ export function suena(nombre) {
 }
 /* Precarga al primer toque (los navegadores no dejan sonar nada antes de un gesto) */
 export function precarga() {
+  precargaVoz();
   for (const k in SONIDOS) if (!cache[k]) {
     try { const a = new Audio(SONIDOS[k]); a.preload = 'auto'; cache[k] = a } catch (e) { }
     /* además se guardan en memoria (los lee el service worker desde su caché si no hay conexión) */

@@ -6,6 +6,9 @@
    - Cada id tiene una o varias variantes; en cada fase se elige una al azar, pero la misma en todos
      los móviles (sale del código de la sala, la ronda y la fase), así el subtítulo coincide con la voz.
    - «|» es una pausa corta al hablar (no se ve en el subtítulo).
+   - La voz buena son audios pregrabados (audio/voz/<id>-<n>.mp3, n = variante desde 1; ver CLAUDE.md → Voz del narrador).
+     Por eso ninguna frase lleva nombres ni tiempos: el nombre del jugador sale grande en pantalla y el tiempo, en el reloj.
+     Si cambias una frase, hay que regenerar su audio (node scripts/voz.mjs); mientras tanto habla la voz del navegador.
    - Regla de oro: el narrador NUNCA dice nada que revele un papel de forma indirecta. Las frases de
      cada fase son las mismas pase lo que pase (esté vivo o muerto quien sea, se haya actuado o no). */
 
@@ -27,14 +30,47 @@ export const TEXTOS = {
   noche_10s: ['Quedan diez segundos.'],
 
   amanece_muerto: [
-    'Amanece en el pueblo… | Esta noche ha muerto {nombre}.',
-    'Sale el sol. | El pueblo despierta… pero falta alguien. | Esta noche ha muerto {nombre}.',
-    'Amanece. | Al abrir las puertas, el pueblo descubre que {nombre} ha muerto esta noche.'
+    'Amanece en el pueblo… | Esta noche ha muerto este jugador.',
+    'Sale el sol. | El pueblo despierta… pero falta alguien. | Esta noche ha muerto este jugador.',
+    'Amanece. | Al abrir las puertas, el pueblo descubre que este jugador ha muerto esta noche.'
   ],
   amanece_nadie: [
     'Amanece en el pueblo… | Esta noche no ha muerto nadie.',
     'Sale el sol. | Todos siguen aquí. | Esta noche no ha muerto nadie.'
   ],
+  era_punto: ['Era un Punto.'],
+  era_ciego: ['Era un Ciego.'],
+
+  debate: [
+    'Ahora, debatid. | ¿Quién es un Punto? | El reloj ya corre.',
+    'Es hora de hablar. | Tenéis el tiempo del reloj para encontrar a los Puntos.'
+  ],
+  debate_30s: ['Quedan treinta segundos de debate.'],
+  votacion: [
+    'Se acabó el debate. | Votad en vuestro móvil a quién queréis echar del pueblo.',
+    'Ha llegado la hora de votar. | Elegid en vuestro móvil.'
+  ],
+  votacion_10s: ['Quedan diez segundos para votar.'],
+
+  eliminado: [
+    'El pueblo ha decidido. | Este jugador abandona el pueblo.',
+    'Los votos están contados. | Este jugador queda fuera del pueblo.'
+  ],
+  empate: [
+    'Hay empate. | Hoy nadie abandona el pueblo.',
+    'El pueblo no se pone de acuerdo. | Hoy nadie se va.'
+  ],
+  sin_votos: ['Nadie ha votado. | Hoy nadie abandona el pueblo.'],
+
+  gana_pueblo: [
+    'No queda ningún Punto. | ¡Ganan los Ciegos!',
+    'El último Punto ha caído. | El pueblo vuelve a dormir tranquilo. | ¡Ganan los Ciegos!'
+  ],
+  gana_puntos: [
+    'Los Puntos ya son tantos como los Ciegos. | ¡Ganan los Puntos!',
+    'El pueblo ha caído en manos de los Puntos. | ¡Ganan los Puntos!'
+  ],
+
   /* Modo de un solo móvil */
   solo_reparto: [
     'Vamos a repartir los papeles. | Cuando el móvil llegue a tus manos, mira tu papel en secreto y pásalo.',
@@ -56,39 +92,16 @@ export const TEXTOS = {
   solo_votacion: [
     'Se acabó el debate. | Ahora votaréis uno a uno y en secreto. | Cuando el móvil llegue a tus manos, elige a quién echar del pueblo.',
     'Hora de votar. | Os iré pasando el móvil. | Votad en secreto.'
-  ],
-  era_punto: ['{nombre} era un Punto.'],
-  era_ciego: ['{nombre} era un Ciego.'],
-
-  debate: [
-    'Ahora, debatid. | ¿Quién es un Punto? | Tenéis {tiempo}.',
-    'Es hora de hablar. | Tenéis {tiempo} para encontrar a los Puntos.'
-  ],
-  debate_30s: ['Quedan treinta segundos de debate.'],
-  votacion: [
-    'Se acabó el debate. | Votad en vuestro móvil a quién queréis echar del pueblo.',
-    'Ha llegado la hora de votar. | Elegid en vuestro móvil.'
-  ],
-  votacion_10s: ['Quedan diez segundos para votar.'],
-
-  eliminado: [
-    'El pueblo ha decidido. | {nombre} abandona el pueblo.',
-    'Los votos están contados. | {nombre} queda fuera del pueblo.'
-  ],
-  empate: [
-    'Hay empate. | Hoy nadie abandona el pueblo.',
-    'El pueblo no se pone de acuerdo. | Hoy nadie se va.'
-  ],
-  sin_votos: ['Nadie ha votado. | Hoy nadie abandona el pueblo.'],
-
-  gana_pueblo: [
-    'No queda ningún Punto. | ¡Ganan los Ciegos!',
-    'El último Punto ha caído. | El pueblo vuelve a dormir tranquilo. | ¡Ganan los Ciegos!'
-  ],
-  gana_puntos: [
-    'Los Puntos ya son tantos como los Ciegos. | ¡Ganan los Puntos!',
-    'El pueblo ha caído en manos de los Puntos. | ¡Ganan los Puntos!'
   ]
+};
+
+/* Entonación de cada frase (para generar el audio con su estilo: scripts/voz.mjs → scripts/voz-config.json).
+   hushed: la noche · tense: muertes, votación y eliminados · rich: bienvenida, amanecer, debate y final. */
+export const TONO = {
+  bienvenida: 'rich', solo_reparto: 'rich', amanece_nadie: 'rich', debate: 'rich', debate_30s: 'rich', gana_pueblo: 'rich', gana_puntos: 'rich',
+  primera_noche: 'hushed', anochece: 'hushed', solo_noche: 'hushed', noche_elegid: 'hushed', noche_10s: 'hushed',
+  puntos_abre: 'hushed', puntos_cierra: 'hushed', cupido_abre: 'hushed', cupido_cierra: 'hushed', vidente_abre: 'hushed', vidente_cierra: 'hushed', bruja_abre: 'hushed', bruja_cierra: 'hushed',
+  amanece_muerto: 'tense', era_punto: 'tense', era_ciego: 'tense', votacion: 'tense', votacion_10s: 'tense', solo_votacion: 'tense', eliminado: 'tense', empate: 'tense', sin_votos: 'tense'
 };
 
 /* Elige variante de forma determinista (igual en todos los móviles) y rellena {campos} */

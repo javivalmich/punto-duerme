@@ -4,3 +4,4 @@ Thumbs.db
 .claude/*
 !.claude/launch.json
 design/
+.env

@@ -38,7 +38,7 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 
 **Narrador**
 - **El narrador es un jugador más**: es el móvil del anfitrión y juega con él en la mano, igual que los demás (no hay opción «yo también juego»; se quitó). Es el único móvil que suena (voz y sonidos), pero su pantalla es la de un jugador normal: ve lo mismo que cualquiera con su papel, ni más ni menos. Lo único propio es el botón de silenciar. La columna `duerme_jugadores.juega` sigue en la base de datos pero siempre es `true`.
-- Voz con `speechSynthesis`, la mejor voz `es-ES` del dispositivo (`narrador.js` puntúa las voces). Botón de silenciar (también silencia los sonidos). iOS solo deja hablar tras un toque: «Crear sala», «Unirme», «Empezar» y «Volver a la partida» llaman a `desbloquea()`.
+- **Voz**: audios pregrabados con Gemini TTS (ver «Voz del narrador» abajo); `speechSynthesis` (la mejor voz `es-ES` del dispositivo, `narrador.js` puntúa las voces) queda solo de reserva si falta algún audio. Botón de silenciar (también silencia los sonidos). iOS solo deja hablar tras un toque: «Crear sala», «Unirme», «Empezar» y «Volver a la partida» llaman a `desbloquea()`.
 - Textos en `beta/js/textos-narrador.js`, con id y variantes. La variante se elige igual en todos los móviles (código + ronda + fase), así el subtítulo que ve cada jugador coincide con la voz.
 - **Nunca dice nada que revele un papel de forma indirecta**: las frases son las mismas pase lo que pase (por ejemplo, «Los Puntos abren los ojos» se dice siempre, y la noche no termina antes por nada que no sea la confirmación de los Puntos o el tiempo).
 - **Relevo**: si el móvil del narrador no está conectado más de 30 s, los demás ven «Ser yo el narrador» (también en el menú ☰); quien lo pulsa pasa a ser el narrador (hace falta un toque para que el navegador deje hablar). Si el narrador sale de la partida, pasa al siguiente por orden de llegada.
@@ -78,6 +78,16 @@ scripts/iconos.mjs                  genera los iconos de la app a partir de beta
 Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
 
 Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche en las funciones SQL (`duerme_empezar`, `duerme_actuar`, `_duerme_noche_fin`), lo que ve en `duerme_vista`, su pantalla en `partida.js` y sus frases en `textos-narrador.js`.
+
+## Voz del narrador (audios Gemini TTS)
+
+- Audios en `beta/audio/voz/<id>-<n>.mp3` (id de frase de `textos-narrador.js`, n = variante desde 1) y `indice.json` (lista de los que existen). `narrador.js` localiza cada frase por su texto, la reproduce como blob y, si falta cualquier audio, habla la voz del navegador. Los audios se precargan en memoria y el service worker los mete en su caché al instalarse (`sw.js`, lee `indice.json`), así suenan también sin conexión en el modo de un solo móvil.
+- **Las frases no llevan nombres ni tiempos** (no se pueden pregrabar): el narrador dice «este jugador» y el nombre sale grande en pantalla; el tiempo del debate sale en el reloj.
+- **Configuración** (`scripts/voz-config.json`, sin la clave): modelo `gemini-3.8-flash-tts`, voz `Riko`, `temperature` 1; instrucción «narrador nativo de Madrid, español de España con acento castellano, sin acento extranjero, c y z como en España, tono de cuento de misterio»; tres estilos (`rich`, `hushed`, `tense`) que se pasan como `speech_metadata.style`. No se cambian sin que lo pida el usuario.
+- **Entonación** de cada frase: `TONO` en `textos-narrador.js` (hushed = noche; tense = muertes, votación y eliminados; rich = bienvenida, amanecer, debate y final).
+- **Generar o regenerar**: `pip install google-genai lameenc` y `python scripts/voz.py` (genera lo que falta; si se corta, se vuelve a ejecutar y continúa; reintenta con espera ante el límite del plan gratuito y para al agotar la cuota diaria; descarta tomas absurdamente largas). `--solo id-n`, `--regenerar id-n`, `--incluir-espera` (frases marcadas `en_espera` en la config). **Si cambias el texto de una frase, regenera su audio** (bórralo y ejecuta el script) y sube `VERSION` en `sw.js`.
+- **Clave**: `GEMINI_API_KEY` solo en `.env` en la raíz (está en `.gitignore`; no se sube ni se escribe en otro archivo).
+- **Condiciones**: los términos de la API de Gemini (aistudio.google.com/docs/terms) no reclaman la propiedad del contenido generado y encajan con uso profesional; en el plan gratuito Google puede usar prompts y respuestas para mejorar sus productos (aquí solo van frases del juego, sin datos personales) y piden atribución cuando el contenido se devuelve en una llamada a la API (no es el caso: se pregraba). Revisar los términos antes de un lanzamiento comercial.
 
 ## Estética
 
