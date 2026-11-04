@@ -64,7 +64,7 @@ beta/
   js/textos-narrador.js        todas las frases del narrador
   js/sonido.js                 sonidos (solo en el móvil del narrador)
   js/cuenta.js, js/cabeza.js   cuenta opcional y personaje (de Punto Falso; listas de colores = Punto Ciego)
-  img/logo.svg                 logo provisional (el definitivo lo pone el usuario)
+  img/logo.png, icono.png      logo con texto (portada) e icono sin texto (iconos de la app)
   assets/personaje3d.js, .bin  personaje 3D del editor (de Punto Ciego)
   audio/*.wav                  sonidos provisionales (noche, amanecer, muerte, votacion, eliminado, tic, victoria-…)
   vendor/                      supabase-js (UMD) y qrcode
@@ -72,7 +72,7 @@ beta/
   soporte.html, terminos.html  adaptados de Punto Falso; privacidad.html redirige a /privacidad/
 supabase/migrations/           tablas y funciones del juego (aplicadas en el proyecto «Punto ciego», qsmcdfyyxvqmesnbwsod)
 scripts/sonidos-provisionales.mjs   genera los .wav provisionales
-scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/logo.svg
+scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/icono.png
 ```
 
 Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
@@ -83,12 +83,12 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 
 Identidad propia dentro de Punto Studio: mismas mascota, tipografía (Outfit), estructura de pantallas y botones con sombra dura gris, pero paleta nocturna. **No se usa el estilo «expediente» ni la skill punto-studio-design** (descartada para este juego).
 
-- **Noche** (portada, sala, reparto, anochece, noche): azul noche `#0B1030`, cielo índigo `#1A2260`, acento **amarillo luna** `#FFD75E`, coral `#FF7A8C` solo para Puntos/muertes/errores.
+- **Noche** (portada, sala, reparto, anochece, noche): azul noche `#0B1030`, cielo índigo `#1A2260`, acento **amarillo luna** `#F4C25A`, coral `#FF7A8C` solo para Puntos/muertes/errores.
 - **Amanecer y día** (amanece, debate, votación, resultado, final): **siempre oscuro y cálido** (se juega con poca luz; nunca fondo claro): morado `#1D1233`/`#5A2A55`, acento melocotón `#FFB46B`, texto `#FFF1E4`, carmesí/rosa `#FF8FA0` para Puntos. Contraste AA comprobado.
 - Los colores son variables en `:root` (`--bg --bg2 --surface --surface2 --line --text --muted --acc --accT --pel --btn --glow`), registradas con `@property` para que se fundan en ~1,6 s. `tema(fase)` (en `util.js`) pone en `<html>` la clase `fase-noche | fase-alba | fase-dia`; se llama desde `renderJuego` y al volver a la sala/portada.
 - Cielo (`#cielo`, fijo detrás de todo): estrellas, brillos que parpadean, niebla que se desplaza, luna (de noche) y sol que sale por el horizonte (alba) y sube un poco (día). Solo CSS y `transform`/`opacity`; respeta `prefers-reduced-motion`.
-- **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (y en `img/logo.svg`).
-- **Logo**: `beta/img/logo.svg` es **provisional**. Para el definitivo: sustituir ese archivo (cuadrado, con su fondo) y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). Mientras tanto los iconos salen del logo provisional.
+- **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (actual: #F4C25A, el amarillo de la luna del logo).
+- **Logos** definitivos: `beta/img/logo.png` (con texto, portada) y `beta/img/icono.png` (sin texto, de él salen los iconos). Para cambiarlos: sustituir esos archivos y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). 
 - La propuesta de diseño (maqueta) está en `design/propuesta.html` (no se publica).
 
 ## Modo de un solo móvil

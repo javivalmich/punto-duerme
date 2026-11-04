@@ -85,7 +85,7 @@ export function cartaRolHTML(r, comp) {
   const R = ROLES[r] || {};
   const extra = r === 'punto' ? `<p class="comp">${comp.length ? 'Tus compañeros: <b>' + esc(listaNombres(comp)) + '</b>' : 'Eres el único Punto.'}</p>` : '';
   return `<div class="card rolcard" id="rolCard" tabindex="0" role="button" aria-label="Mantén pulsado para ver tu papel">
-    <div class="front"><img class="mascot" src="img/logo.svg" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
+    <div class="front"><img class="mascot" src="img/icono.png" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
     <div class="back"><p class="k">Eres</p><p class="rolnom ${r}">${esc((R.nombre || '').toUpperCase())}</p><p class="rcorto">${esc(R.corto || '')}</p><p class="rtexto">${esc(R.texto || '')}</p>${extra}</div>
   </div>`;
 }
