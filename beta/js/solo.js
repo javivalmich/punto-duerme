@@ -16,7 +16,7 @@ import { ROLES, NOCHE, nombreRol, puntosPara, maxPuntos, sugerirPuntos } from '.
 import { texto, subtitulo } from './textos-narrador.js';
 import { di, calla, silencia, desbloquea, VOZ } from './narrador.js';
 import { suena, precarga } from './sonido.js';
-import { FASES, cartaRolHTML, tiempoHablado, ICO_VOZ, ICO_MUDO } from './partida.js';
+import { FASES, cartaRolHTML, ICO_VOZ, ICO_MUDO } from './partida.js';
 import { avImg } from './cuenta.js';
 import { irInicio } from './sala.js';
 
@@ -113,11 +113,11 @@ function entra() {
   const habla = (t, fin) => { S.narra = t; pintaNarra(); di(t, () => { if (S && S.n === n && fin) fin() }) };
   switch (S.fase) {
     case 'reparto':
-      if (s.i === 0 && s.paso === 'pasa') habla(texto('solo_reparto', null, sm));
+      if (s.i === 0 && s.paso === 'pasa') habla(texto('bienvenida', null, sm));
       break;
     case 'anochece':
       suena('noche');
-      habla(texto('solo_noche', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 900));
+      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 900));
       break;
     case 'noche': {
       const p = pasos()[s.k];
@@ -135,23 +135,24 @@ function entra() {
     case 'amanece': {
       const m = S.pub.muertos || [];
       suena('amanecer'); if (m.length) setTimeout(() => suena('muerte'), 1600);
-      const era = o => S.cfg.revelar ? ' | ' + texto(o.rol === 'punto' ? 'era_punto' : 'era_ciego', { nombre: o.n }, sm) : '';
-      habla(m.length ? m.map(o => texto('amanece_muerto', { nombre: o.n }, sm) + era(o)).join(' | ') : texto('amanece_nadie', null, sm),
+      habla(texto('amanece_inicio', null, sm) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sm) : m.length ? texto('amanece_muerto', null, sm) : texto('amanece_nadie', null, sm)),
         () => luego(() => { ganador() ? ir('final') : ir('debate') }, 2200));
       break;
     }
     case 'debate':
-      if (!s.hasta) { S.sub.hasta = Date.now() + S.cfg.t_debate * 1000; guarda(); habla(texto('debate', { tiempo: tiempoHablado(S.cfg.t_debate) }, sm)) }
+      if (!s.hasta) { S.sub.hasta = Date.now() + S.cfg.t_debate * 1000; guarda(); habla(texto('debate', null, sm)) }
       arrancaCuenta();
       break;
     case 'votacion':
-      if (s.i === 0 && s.paso === 'pasa') { suena('votacion'); habla(texto('solo_votacion', null, sm)) }
+      if (s.i === 0 && s.paso === 'pasa') { suena('votacion'); habla(texto('votacion', null, sm)) }
       break;
     case 'resultado': {
-      const e = S.pub.eliminado, era = e && S.cfg.revelar ? ' | ' + texto(e.rol === 'punto' ? 'era_punto' : 'era_ciego', { nombre: e.n }, sm) : '';
+      const e = S.pub.eliminado, siguiente = () => { if (ganador()) ir('final'); else { S.ronda++; ir('anochece') } };
       if (e) suena('eliminado');
-      habla(e ? texto('eliminado', { nombre: e.n }, sm) + era : texto('empate', null, sm),
-        () => luego(() => { if (ganador()) ir('final'); else { S.ronda++; ir('anochece') } }, 2200));
+      /* la frase acaba en suspense («…y señala a…»): el nombre aparece al terminar */
+      if (e && !s.revela) habla(texto('eliminado', null, sm), () => { S.sub.revela = true; guarda(); render(); luego(siguiente, 7000) });
+      else if (e) luego(siguiente, 7000);
+      else habla(texto(S.pub.recuento && S.pub.recuento.length ? 'empate' : 'sin_votos', null, sm), () => luego(siguiente, 2200));
       break;
     }
     case 'final': {
@@ -191,7 +192,6 @@ function arrancaCuenta() {
     const txt = Math.floor(Math.max(0, r) / 60) + ':' + String(Math.max(0, r) % 60).padStart(2, '0');
     if (el.textContent !== txt) el.textContent = txt;
     el.classList.toggle('poco', r <= 10);
-    if (r === 30 && !avisos.has('30')) { avisos.add('30'); di(texto('debate_30s', null, sem())) }
     if (r <= 5 && r > 0 && !avisos.has('t' + r)) { avisos.add('t' + r); suena('tic') }
     if (r <= 0) { clearInterval(CUENTA); empiezaVoto() }
   };
@@ -251,6 +251,7 @@ const CUERPO = {
   },
   resultado() {
     const p = S.pub, rec = p.recuento || [], max = Math.max(1, ...rec.map(r => r.v)), e = p.eliminado;
+    if (e && !S.sub.revela) return { fijo: `<div class="muerto"><div class="suspense" aria-hidden="true">…</div></div>`, vivo: '' };
     const caja = e ? `<div class="muerto">${avImg(null, 'xl')}<b>${esc(e.n)}</b><span>${S.cfg.revelar ? 'era ' + (e.rol === 'punto' ? 'un Punto' : 'un Ciego') : 'abandona el pueblo'}</span></div>`
       : `<div class="muerto nadie"><b>Nadie sale</b><span>hay empate</span></div>`;
     const barras = rec.length ? `<div class="recuento">${rec.map(r => `<div class="cr">${avImg(null, 'sm')}<span class="nm">${esc(r.n)}</span><span class="b"><i style="width:${Math.round(100 * r.v / max)}%"></i></span><span class="v">${r.v}</span></div>`).join('')}</div>` : '';

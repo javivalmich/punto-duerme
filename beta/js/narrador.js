@@ -40,6 +40,8 @@ const BLOBS = new Map();
 const FRASES = [];
 for (const id in TEXTOS) TEXTOS[id].forEach((t, i) => FRASES.push({ clip: id + '-' + (i + 1), t }));
 FRASES.sort((a, b) => b.t.length - a.t.length);
+let DURS = {};
+fetch('audio/voz/duraciones.json').then(r => r.ok ? r.json() : {}).then(d => { DURS = d }).catch(() => { });
 fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
 function clipsDe(texto) {
   if (!INDICE) return null;
@@ -118,5 +120,11 @@ export function di(texto, fin) {
   };
   sig();
   }
+}
+/* Cuánto durará un texto al decirlo (s): suma de sus audios (+ pausa entre ellos) o, sin audios, una estimación */
+export function duracionTexto(texto) {
+  const clips = clipsDe(texto);
+  if (clips && clips.every(c => DURS[c])) return clips.reduce((t, c) => t + DURS[c] + 0.35, 0);
+  return dura(String(texto || '')) * 1.1 / 1000;
 }
 export const hayVoz = () => !!SS;

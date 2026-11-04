@@ -2,7 +2,6 @@
    Uso: npm i --no-save sharp  &&  node scripts/iconos.mjs
    Los iconos no pueden ser transparentes: el emblema se recorta a su contenido y se coloca sobre un fondo azul noche de la paleta
    (#1a2260 arriba → #0b1030 abajo), llenando el icono para que luna y mascota se lean en pequeño.
-   Si llega un logo nuevo sin canal alfa (fondo blanco): python scripts/quita-fondo.py (ver su cabecera). */
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

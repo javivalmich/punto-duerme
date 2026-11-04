@@ -163,6 +163,9 @@ def escribe_lista(todas):
         r = os.path.join(DESTINO, f['id'] + '.mp3')
         l.append(f"| {f['id']} | {f['tono']} | {duracion_mp3(r):.1f} s | {f['texto']} |" if os.path.exists(r) else f"| {f['id']} | {f['tono']} | — pendiente | {f['texto']} |")
     open(os.path.join(RAIZ, 'scripts', 'voz-lista.md'), 'w', encoding='utf-8').write('\n'.join(l) + '\n')
+    # duraciones (s) de cada audio: la app las usa para revelar el nombre justo al terminar la frase
+    dur = {f['id']: round(duracion_mp3(os.path.join(DESTINO, f['id'] + '.mp3')), 2) for f in todas if os.path.exists(os.path.join(DESTINO, f['id'] + '.mp3'))}
+    json.dump(dur, open(os.path.join(DESTINO, 'duraciones.json'), 'w', encoding='utf-8'))
 
 
 def main():

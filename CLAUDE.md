@@ -73,7 +73,6 @@ beta/
 supabase/migrations/           tablas y funciones del juego (aplicadas en el proyecto «Punto ciego», qsmcdfyyxvqmesnbwsod)
 scripts/sonidos-provisionales.mjs   genera los .wav provisionales
 scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/emblema.png
-scripts/quita-fondo.py              quita el fondo blanco de un logo aplanado (los PNG llegaron sin canal alfa; ver su cabecera)
 ```
 
 Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
@@ -86,7 +85,8 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 - **Las frases no llevan nombres ni tiempos** (no se pueden pregrabar): el narrador dice «este jugador» y el nombre sale grande en pantalla; el tiempo del debate sale en el reloj.
 - **Configuración** (`scripts/voz-config.json`, sin la clave): modelo `gemini-3.8-flash-tts`, voz `Riko`, `temperature` 0,7; instrucción «narrador nativo de Madrid, español de España con acento castellano, sin acento extranjero, c y z como en España, tono de cuento de misterio»; estilos `rich`, `tense` y `hushed` (este último: «Low, mysterious, suspenseful night-time narration, spoken softly but clearly projected so a whole room can hear it…», para que se oiga en una sala) que se pasan como `speech_metadata.style`. No se cambian sin que lo pida el usuario.
 - **Entonación** de cada frase: `TONO` en `textos-narrador.js` (hushed = noche; tense = muertes, votación y eliminados; rich = bienvenida, amanecer, debate y final).
-- **Textos**: el narrador solo cuenta la historia con tono de cuento; **nunca da órdenes de juego ni avisos de tiempo** (eso lo dicen la pantalla y el reloj). Sin nombres ni tiempos (no se pueden pregrabar): «este jugador» + nombre grande en pantalla.
+- **Estado de los audios**: textos aprobados el 5 nov 2026 (46 frases: 15 hushed, 15 tense, 16 rich); **pendientes de generar** (la cuota gratuita de Gemini estaba agotada): ejecutar `python scripts/voz.py` (unas 6 peticiones). Hasta entonces `indice.json` es `[]` y suena la voz del navegador.
+- **Textos**: el narrador solo cuenta la historia con tono de cuento; **nunca da órdenes de juego ni avisos de tiempo** (eso lo dicen la pantalla y el reloj). Sin nombres ni tiempos (no se pueden pregrabar): el nombre sale grande en pantalla. La frase de `eliminado` acaba en suspense («…y señala a…») y el nombre (y su papel, si está activado) aparece al terminar el audio (`duracionTexto` en `narrador.js`, usando `audio/voz/duraciones.json` que escribe el script). La voz nunca dice el bando ni el papel de nadie.
 - **Generar o regenerar** (`python scripts/voz.py`; `pip install google-genai lameenc numpy scipy pyloudnorm`):
   - Agrupa hasta 8 frases de la misma entonación por petición (separadas con pausas largas) y corta por los silencios; exige tantos trozos como frases y duraciones razonables, si no repite solo ese lote.
   - **Masterizado fijo de cada audio**: compresión suave → -14 LUFS → limitador a -1 dBFS (MP3 96 kbps mono).

@@ -506,3 +506,6 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .hero .logo{width:auto;height:auto;max-width:min(82vw,330px);max-height:42dvh;aspect-ratio:auto;border-radius:0;background:none;margin:0 auto 4px;filter:drop-shadow(0 6px 26px color-mix(in srgb,var(--acc) 18%,transparent))}
 .lema{font-weight:300;font-size:clamp(.72rem,3.5vw,.86rem);letter-spacing:.32em;text-indent:.32em;color:var(--muted);text-align:center;margin-top:6px}
+
+.suspense{font-weight:900;font-size:4rem;line-height:1;color:var(--muted);letter-spacing:.2em;animation:pulso 1.2s ease-in-out infinite alternate}
+@keyframes pulso{from{opacity:.3}to{opacity:1}}

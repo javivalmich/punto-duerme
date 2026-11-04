@@ -10,7 +10,7 @@ import { E, ahora, jug, nombreDe, soyAnfitrion, soyNarrador, conectado, accion, 
 import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, VOZ } from './narrador.js';
+import { di, calla, silencia, VOZ, duracionTexto } from './narrador.js';
 import { suena } from './sonido.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
 
@@ -19,21 +19,20 @@ const NARRADAS = ['anochece', 'amanece', 'resultado'];
 
 /* ---------- Lo que dice el narrador en cada fase (también sale como subtítulo en todos los móviles) ---------- */
 export const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
-const era = (o, sem) => o && o.rol ? ' | ' + texto(o.rol === 'punto' ? 'era_punto' : 'era_ciego', { nombre: nombreDe(o.id) }, sem) : '';
 export function textoFase(V) {
   const s = V.sala, p = s.publico || {}, sem = s.codigo + s.ronda + s.fase;
   switch (s.fase) {
     case 'reparto': return texto('bienvenida', null, sem);
-    case 'anochece': return texto(s.ronda <= 1 ? 'primera_noche' : 'anochece', null, sem);
-    case 'noche': return texto('noche_elegid', null, sem);
+    case 'anochece': return texto(s.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sem) + ' | ' + texto('puntos_abre', null, sem);
+    case 'noche': return '';
     case 'amanece': {
       const m = p.muertos || [];
-      return m.length ? m.map(o => texto('amanece_muerto', { nombre: nombreDe(o.id) }, sem) + era(o, sem)).join(' | ') : texto('amanece_nadie', null, sem);
+      return texto('amanece_inicio', null, sem) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sem) : m.length ? texto('amanece_muerto', null, sem) : texto('amanece_nadie', null, sem));
     }
-    case 'debate': return texto('debate', { tiempo: tiempoHablado(s.config.t_debate) }, sem);
+    case 'debate': return texto('debate', null, sem);
     case 'votacion': return texto('votacion', null, sem);
     case 'resultado':
-      if (p.eliminado) return texto('eliminado', { nombre: nombreDe(p.eliminado.id) }, sem) + era(p.eliminado, sem);
+      if (p.eliminado) return texto('eliminado', null, sem);
       return texto((p.recuento || []).length ? 'empate' : 'sin_votos', null, sem);
     case 'final': return texto(p.ganador === 'puntos' ? 'gana_puntos' : 'gana_pueblo', null, sem);
   }
@@ -43,6 +42,12 @@ export function textoFase(V) {
 /* ---------- Pintado ---------- */
 function pinta(id, html) { const el = $(id); if (el._h !== html) { el._h = html; el.innerHTML = html } }
 let FIJO_K = '';
+/* Quién sale eliminado se muestra justo al terminar la frase del narrador (que acaba en suspense) */
+const revelado = V => {
+  const s = V.sala, e = (s.publico || {}).eliminado;
+  if (s.fase !== 'resultado' || !e) return true;
+  return ahora() - s.desde >= 1000 * (duracionTexto(textoFase(V)) + 1.2);
+};
 export function renderJuego() {
   const V = E.V, s = V.sala, me = V.yo;
   tema(s.fase);
@@ -51,7 +56,7 @@ export function renderJuego() {
   mudo.innerHTML = VOZ.mudo ? ICO_MUDO : ICO_VOZ; mudo.setAttribute('aria-label', VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador');
   pinta('jNarra', esc(subtitulo(textoFase(V))));
   const f = CUERPO[s.fase] ? CUERPO[s.fase](V) : { fijo: '', vivo: '' };
-  const k = s.fase + '|' + s.ronda + '|' + s.desde + '|' + me.vivo;
+  const k = s.fase + '|' + s.ronda + '|' + s.desde + '|' + me.vivo + '|' + revelado(V);
   if (k !== FIJO_K) { FIJO_K = k; $('jFijo').innerHTML = f.fijo; $('jFijo')._h = f.fijo }
   else pinta('jFijo', f.fijo.includes('rolCard') ? $('jFijo')._h : f.fijo);
   pinta('jVivo', f.vivo);
@@ -146,6 +151,7 @@ const CUERPO = {
   resultado(V) {
     const p = V.sala.publico || {}, rec = p.recuento || [], max = Math.max(1, ...rec.map(r => r.n));
     const e = p.eliminado, j = e && jug(e.id);
+    if (e && !revelado(V)) return { fijo: `<div class="muerto"><div class="suspense" aria-hidden="true">…</div></div>`, vivo: '' };
     const caja = e ? `<div class="muerto">${avImg(j && j.look, 'xl')}<b>${esc(j ? j.nombre : '')}</b><span>${e.rol ? 'era ' + (e.rol === 'punto' ? 'un Punto' : 'un Ciego') : 'abandona el pueblo'}</span></div>`
       : `<div class="muerto nadie"><b>Nadie sale</b><span>${rec.length ? 'hay empate' : 'nadie ha votado'}</span></div>`;
     const barras = rec.length ? `<div class="recuento">${rec.map(r => { const x = jug(r.id) || {}; return `<div class="cr">${avImg(x.look, 'sm')}<span class="nm">${esc(x.nombre || '')}</span><span class="b"><i style="width:${Math.round(100 * r.n / max)}%"></i></span><span class="v">${r.n}</span></div>` }).join('')}</div>` : '';
@@ -179,7 +185,7 @@ function dirige() {
   const t = textoFase(E.V), fase = s.fase, desde = s.desde;
   const sigue = () => {
     if (!NARRADAS.includes(fase)) return;
-    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, 900);
+    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'resultado' && p.eliminado ? 7000 : 900);
   };
   setTimeout(() => { if (DIR.k === k) di(t, sigue) }, son ? 900 : 200);
 }
@@ -188,10 +194,6 @@ function tic() {
   if (!E.V || !soyNarrador()) return;
   const s = E.V.sala; if (!s.hasta) return;
   const q = Math.ceil((s.hasta - ahora()) / 1000), total = (s.hasta - s.desde) / 1000;
-  const avisa = (id, seg, min) => { if (q <= seg && q > seg - 3 && total > min && !DIR.avisos.has(id)) { DIR.avisos.add(id); di(texto(id, null, s.codigo + s.ronda)) } };
-  if (s.fase === 'noche') avisa('noche_10s', 10, 20);
-  if (s.fase === 'debate') avisa('debate_30s', 30, 60);
-  if (s.fase === 'votacion') avisa('votacion_10s', 10, 20);
   if ((s.fase === 'noche' || s.fase === 'votacion') && q > 0 && q <= 5 && !DIR.avisos.has('t' + q)) { DIR.avisos.add('t' + q); suena('tic') }
 }
 
@@ -217,7 +219,7 @@ export function pintaCuentas() {
   const t = s && s.hasta && s.fase !== 'final' ? Math.max(0, Math.ceil((s.hasta - ahora()) / 1000)) : null;
   const txt = t == null || NARRADAS.includes(s.fase) || s.fase === 'reparto' ? '' : Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   document.querySelectorAll('[data-cuenta]').forEach(el => { if (el.textContent !== txt) el.textContent = txt; el.classList.toggle('poco', t != null && t <= 10) });
-  if (s) { renderAviso(); tic() }
+  if (s) { renderAviso(); tic(); if (s.fase === 'resultado' && E.REV !== revelado(E.V)) { E.REV = revelado(E.V); renderJuego() } }
 }
 
 /* ---------- Menú y salir ---------- */
