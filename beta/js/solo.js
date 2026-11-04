@@ -19,6 +19,7 @@ import { suena, precarga } from './sonido.js';
 import { FASES, cartaRolHTML, ICO_VOZ, ICO_MUDO } from './partida.js';
 import { avImg } from './cuenta.js';
 import { irInicio } from './sala.js';
+import { liberaAudio } from './audio.js';
 
 const CINCO_H = 5 * 3600 * 1000;
 const DEF = { nombres: [], puntos: null, t_debate: 180, revelar: true };
@@ -32,7 +33,7 @@ export function soloGuardado() {
   return g.S;
 }
 const guarda = () => lsSet('solo', { t: Date.now(), S });
-const olvida = () => { S = null; clearInterval(CUENTA); calla(); lsDel('solo') };
+const olvida = () => { S = null; clearInterval(CUENTA); calla(); liberaAudio(); lsDel('solo') };
 
 /* ---------- Ajustes (antes de empezar) ---------- */
 const fmt = s => s < 60 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' min';

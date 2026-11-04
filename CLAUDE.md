@@ -81,6 +81,10 @@ Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la exte
 
 Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche en las funciones SQL (`duerme_empezar`, `duerme_actuar`, `_duerme_noche_fin`), lo que ve en `duerme_vista`, su pantalla en `partida.js` y sus frases en `textos-narrador.js`.
 
+## Audio en iPhone (importante)
+
+**Nunca usar elementos `<audio>`/`<video>`** (ni audio en silencio en bucle): iOS los trata como música y deja el reproductor «Punto Duerme» en la pantalla de bloqueo. Todo el sonido (voz y efectos) va por **Web Audio** (`js/audio.js`: `AudioContext`, `decodeAudioData`, `BufferSource`). `desbloquea()` se llama desde un toque («Crear», «Unirme», «Empezar», «Volver a la partida», empezar un solo móvil); `reanuda()` en cada toque por si iOS interrumpió el contexto. `liberaAudio()` para todo, cierra el contexto y limpia `navigator.mediaSession` (metadata null, playbackState `none`, sin manejadores) al salir de la partida, en `pagehide` y al ocultarse la página; cada clip se desconecta al terminar. La pantalla se mantiene encendida **solo con la Wake Lock API** (`app.js`), que se suelta al salir y en `pagehide`.
+
 ## Voz del narrador (audios Gemini TTS)
 
 - Audios en `beta/audio/voz/<id>-<n>.mp3` (id de frase de `textos-narrador.js`, n = variante desde 1) y `indice.json` (lista de los que existen). `narrador.js` localiza cada frase por su texto, la reproduce como blob y, si falta cualquier audio, habla la voz del navegador. Los audios se precargan en memoria y el service worker los mete en su caché al instalarse (`sw.js`, lee `indice.json`), así suenan también sin conexión en el modo de un solo móvil.

@@ -3,6 +3,7 @@
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
 import { TEXTOS } from './textos-narrador.js';
+import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer } from './audio.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0 };
@@ -34,9 +35,8 @@ if (SS) { eligeVoz(); SS.addEventListener && SS.addEventListener('voiceschanged'
 
 /* ---------- Voz buena: audios pregrabados (audio/voz/<id>-<n>.mp3, índice en indice.json) ----------
    Se localizan por el texto de la frase (las frases ya no llevan nombres ni tiempos). Si falta cualquier audio, habla la voz del navegador. */
-const A = new Audio();
 let INDICE = null;
-const BLOBS = new Map();
+let CLIP = null; /* clip de voz sonando (Web Audio) */
 const FRASES = [];
 for (const id in TEXTOS) TEXTOS[id].forEach((t, i) => FRASES.push({ clip: id + '-' + (i + 1), t }));
 FRASES.sort((a, b) => b.t.length - a.t.length);
@@ -52,22 +52,19 @@ function clipsDe(texto) {
   }
   return out;
 }
-/* Se descarga como blob (así el service worker lo sirve de su caché sin conexión y no hay problemas de «Range» en iOS) */
-function cargaClip(c) {
-  if (!BLOBS.has(c)) BLOBS.set(c, fetch('audio/voz/' + c + '.mp3').then(r => { if (!r.ok) throw new Error('clip'); return r.blob() }).then(b => URL.createObjectURL(b)).catch(e => { BLOBS.delete(c); throw e }));
-  return BLOBS.get(c);
-}
-export function precargaVoz() { if (INDICE) INDICE.forEach(c => cargaClip(c).catch(() => { })); else setTimeout(precargaVoz, 1500) }
+const urlClip = c => 'audio/voz/' + c + '.mp3';
+export function precargaVoz() { if (INDICE) INDICE.forEach(c => carga(urlClip(c)).catch(() => { })); else setTimeout(precargaVoz, 1500) }
+const paraClip = () => { if (CLIP) { CLIP.parar(); CLIP = null } };
+/* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo) */
 function reproduce(clips, vale, fin, fallo) {
   let i = 0;
   const sig = async () => {
     if (!vale()) return;
     if (i >= clips.length) return fin();
     try {
-      A.src = await cargaClip(clips[i++]);
+      const buf = await decodifica(urlClip(clips[i++]), false);
       if (!vale()) return;
-      A.onended = () => setTimeout(sig, 350); A.onerror = fallo;
-      await A.play();
+      CLIP = suenaBuffer(buf, () => { CLIP = null; setTimeout(sig, 350) });
     } catch (e) { if (vale()) fallo() }
   };
   sig();
@@ -75,22 +72,21 @@ function reproduce(clips, vale, fin, fallo) {
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
 export function desbloquea() {
-  desbloqueaAudio();
+  desbloqueaWA();
   if (!SS) return;
   try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'es-ES'; SS.speak(u) } catch (e) { }
 }
-export function desbloqueaAudio() { try { A.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='; A.play().catch(() => { }) } catch (e) { } }
 export function silencia(on) {
   VOZ.mudo = !!on; lsSet('mudo', VOZ.mudo);
-  if (VOZ.mudo) { try { A.pause() } catch (e) { } if (SS) try { SS.cancel() } catch (e) { } }
+  if (VOZ.mudo) { paraClip(); if (SS) try { SS.cancel() } catch (e) { } }
 }
-export function calla() { VOZ.cola++; try { A.pause() } catch (e) { } if (SS) try { SS.cancel() } catch (e) { } }
+export function calla() { VOZ.cola++; paraClip(); if (SS) try { SS.cancel() } catch (e) { } }
 
 const dura = t => Math.max(1200, t.replace(/\|/g, '').length * 62);
 
 /* Dice un texto («|» = pausa) y llama a fin() al terminar. Una llamada nueva corta la anterior. */
 export function di(texto, fin) {
-  const yo = ++VOZ.cola;
+  const yo = ++VOZ.cola; paraClip();
   const acaba = () => { if (yo === VOZ.cola && fin) { const f = fin; fin = null; f() } };
   const trozos = String(texto || '').split('|').map(s => s.trim()).filter(Boolean);
   if (!trozos.length) { setTimeout(acaba, 0); return }

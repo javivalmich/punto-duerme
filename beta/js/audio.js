@@ -1,0 +1,81 @@
+/* Todo el sonido de la app (voz del narrador y efectos) pasa por Web Audio (AudioContext), nunca por elementos <audio>/<video>:
+   iOS trata un <audio> como «música» y deja el reproductor «Punto Duerme» en la pantalla de bloqueo (con play, ±10 s…).
+   Con Web Audio no aparece. Además se limpia navigator.mediaSession y se para y libera todo al salir de la partida,
+   al ocultarse/cerrarse la página (pagehide) y al terminar cada clip.
+   La pantalla se mantiene encendida solo con la Wake Lock API (app.js), nunca con un audio o vídeo en silencio. */
+
+let CTX = null;
+const ACTIVOS = new Set();   // fuentes sonando ahora mismo
+const CRUDOS = new Map();    // url -> Promise<ArrayBuffer> (sin decodificar, ocupa poco)
+
+const Ctor = window.AudioContext || window.webkitAudioContext;
+
+/* Quita cualquier rastro de «reproductor» en la pantalla de bloqueo */
+export function limpiaMediaSession() {
+  try {
+    const ms = navigator.mediaSession; if (!ms) return;
+    ms.metadata = null; ms.playbackState = 'none';
+    for (const a of ['play', 'pause', 'stop', 'seekbackward', 'seekforward', 'previoustrack', 'nexttrack', 'seekto']) { try { ms.setActionHandler(a, null) } catch (e) { } }
+  } catch (e) { }
+}
+
+/* Hay que llamarlo desde un toque del usuario (iOS no deja sonar antes): crea o reanuda el contexto y emite un instante de silencio */
+export function desbloquea() {
+  limpiaMediaSession();
+  if (!Ctor) return;
+  try {
+    if (!CTX || CTX.state === 'closed') CTX = new Ctor();
+    if (CTX.state !== 'running') CTX.resume().catch(() => { });
+    const b = CTX.createBuffer(1, 1, 22050), s = CTX.createBufferSource(); s.buffer = b; s.connect(CTX.destination); s.start(0);
+    s.onended = () => { try { s.disconnect() } catch (e) { } };
+  } catch (e) { }
+}
+/* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
+export function reanuda() { if (CTX && CTX.state !== 'running' && CTX.state !== 'closed') CTX.resume().catch(() => { }) }
+
+/* Descarga (sin decodificar) para tenerlo a mano, también sin conexión (el service worker lo sirve de su caché) */
+export function carga(url) {
+  if (!CRUDOS.has(url)) CRUDOS.set(url, fetch(url).then(r => { if (!r.ok) throw new Error('audio'); return r.arrayBuffer() }).catch(e => { CRUDOS.delete(url); throw e }));
+  return CRUDOS.get(url);
+}
+const DECOD = new Map();     // url -> Promise<AudioBuffer> (solo los efectos cortos se guardan decodificados)
+export async function decodifica(url, guardar) {
+  if (!Ctor) throw new Error('sin Web Audio');
+  if (!CTX || CTX.state === 'closed') CTX = new Ctor();
+  if (guardar && DECOD.has(url)) return DECOD.get(url);
+  const p = carga(url).then(ab => new Promise((ok, ko) => { const c = CTX; c.decodeAudioData(ab.slice(0), ok, ko) }));
+  if (guardar) DECOD.set(url, p.catch(e => { DECOD.delete(url); throw e }));
+  return p;
+}
+
+/* Reproduce un AudioBuffer; devuelve { parar() }. `fin` se llama al terminar (o al pararlo no). El clip se desconecta al acabar. */
+export function reproduce(buffer, fin) {
+  if (!CTX || CTX.state === 'closed') throw new Error('sin contexto');
+  reanuda();
+  const s = CTX.createBufferSource(); s.buffer = buffer; s.connect(CTX.destination);
+  const h = { parar() { try { s.onended = null; s.stop() } catch (e) { } libera() } };
+  const libera = () => { ACTIVOS.delete(h); try { s.disconnect() } catch (e) { } };
+  s.onended = () => { libera(); if (fin) fin() };
+  ACTIVOS.add(h); s.start(0);
+  return h;
+}
+
+/* Para todo lo que suene */
+export function paraTodo() { for (const h of [...ACTIVOS]) h.parar() }
+
+/* Libera el audio por completo (al salir de la partida o cerrar la página): para, cierra el contexto y limpia la sesión multimedia */
+export function liberaAudio() {
+  paraTodo(); DECOD.clear();
+  const c = CTX; CTX = null;
+  if (c && c.state !== 'closed') { try { c.close().catch(() => { }) } catch (e) { } }
+  limpiaMediaSession();
+}
+
+/* Al ocultar la página (bloqueo, cambio de app) se para y suspende; al volver, reanuda en el siguiente toque */
+window.addEventListener('pagehide', liberaAudio);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { paraTodo(); if (CTX && CTX.state === 'running') CTX.suspend().catch(() => { }); limpiaMediaSession() }
+  else reanuda();
+});
+document.addEventListener('pointerdown', reanuda, true);
+limpiaMediaSession();

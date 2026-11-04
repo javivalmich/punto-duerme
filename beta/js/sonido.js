@@ -2,6 +2,7 @@
    quién está haciendo algo). Son archivos de audio/ con nombres claros; los actuales son provisionales:
    para cambiarlos, sustituye el archivo (o cambia aquí la ruta si cambia la extensión). */
 import { VOZ, precargaVoz } from './narrador.js';
+import { decodifica, reproduce as suenaBuffer } from './audio.js';
 
 export const SONIDOS = {
   noche: 'audio/noche.wav',              // cae la noche
@@ -13,20 +14,13 @@ export const SONIDOS = {
   'victoria-ciegos': 'audio/victoria-ciegos.wav',
   'victoria-puntos': 'audio/victoria-puntos.wav'
 };
-const cache = {};
+/* Con Web Audio (no <audio>: en iOS crearía el reproductor de la pantalla de bloqueo); ver audio.js */
 export function suena(nombre) {
   if (VOZ.mudo || !SONIDOS[nombre]) return;
-  try {
-    const a = cache[nombre] || (cache[nombre] = new Audio(SONIDOS[nombre]));
-    a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => { });
-  } catch (e) { }
+  decodifica(SONIDOS[nombre], true).then(b => suenaBuffer(b)).catch(() => { });
 }
-/* Precarga al primer toque (los navegadores no dejan sonar nada antes de un gesto) */
+/* Precarga al primer toque (los navegadores no dejan sonar nada antes de un gesto); también se guardan para usarlos sin conexión */
 export function precarga() {
   precargaVoz();
-  for (const k in SONIDOS) if (!cache[k]) {
-    try { const a = new Audio(SONIDOS[k]); a.preload = 'auto'; cache[k] = a } catch (e) { }
-    /* además se guardan en memoria (los lee el service worker desde su caché si no hay conexión) */
-    fetch(SONIDOS[k]).then(r => r.ok ? r.blob() : null).then(b => { if (b) { const a = new Audio(URL.createObjectURL(b)); a.preload = 'auto'; cache[k] = a } }).catch(() => { });
-  }
+  for (const k in SONIDOS) decodifica(SONIDOS[k], true).catch(() => { });
 }

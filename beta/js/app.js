@@ -10,6 +10,7 @@ import { iniciaSala, renderSala, irInicio, abrirUnir, renderInicio, limpiaCodigo
 import { iniciaPartida, renderJuego, pintaCuentas } from './partida.js';
 import { iniciaPruebas } from './pruebas.js';
 import { iniciaSolo, soloActivo } from './solo.js';
+import { liberaAudio } from './audio.js';
 
 /* Cada vez que llega una vista nueva (o cambia algo local), se pinta la pantalla que toca */
 function render() {
@@ -21,7 +22,7 @@ function render() {
 }
 E.render = render;
 document.addEventListener('pantalla', () => pidePantallaEncendida());
-E.alSalir = msg => { tema('sala'); soltarPantalla(); irInicio(); if (msg) toast(msg) };
+E.alSalir = msg => { tema('sala'); soltarPantalla(); liberaAudio(); irInicio(); if (msg) toast(msg) };
 document.addEventListener('repinta', render);
 
 /* Si el jugador cambia su personaje o su nombre con la cuenta, se avisa a la sala */
@@ -34,6 +35,7 @@ async function pidePantallaEncendida() {
   try { if ((E.ses || soloActivo()) && navigator.wakeLock && !WL && !document.hidden) { WL = await navigator.wakeLock.request('screen'); WL.addEventListener('release', () => { WL = null }) } } catch (e) { }
 }
 function soltarPantalla() { try { WL && WL.release() } catch (e) { } WL = null }
+window.addEventListener('pagehide', soltarPantalla);
 
 /* Al volver a la app: el socket pudo cortarse con el móvil bloqueado. Nadie sale por eso. */
 document.addEventListener('visibilitychange', () => {
