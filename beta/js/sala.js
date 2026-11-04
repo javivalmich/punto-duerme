@@ -7,6 +7,7 @@ import { sugerirPuntos, puntosPara, maxPuntos } from './roles.js';
 import { desbloquea } from './narrador.js';
 import { precarga } from './sonido.js';
 import { salirSheet } from './partida.js';
+import { renderPruebasSala } from './pruebas.js';
 
 /* ---------- Ajustes de la partida (al crearla y en la sala de espera) ---------- */
 const DEF = { puntos: null, t_noche: 30, t_debate: 180, t_voto: 60, revelar: true };
@@ -101,9 +102,10 @@ export function renderSala() {
     try { const q = window.qrcode(0, 'M'); q.addData(enlace(s.codigo)); q.make(); qr.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); qr.dataset.c = s.codigo } catch (e) { }
   }
   const js = V.jugadores.filter(j => !j.fuera), jugadores = js.length;
-  const lista = js.map((j, i) => `<div class="pl"><span class="num">${i + 1}</span>${avImg(j.id === V.yo.id ? (miLook() || j.look) : j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${j.id === s.anfitrion ? '<span class="tg">anfitrión</span>' : ''}${j.id === V.yo.id ? '<span class="tg">tú</span>' : ''}</span><span class="dot${conectado(j.id) ? '' : ' off'}" title="${conectado(j.id) ? 'Conectado' : 'Sin conexión'}"></span>${host && j.id !== V.yo.id ? `<button class="kick" data-kick="${j.id}" aria-label="Sacar a ${esc(j.nombre)}">✕</button>` : ''}</div>`).join('');
+  const lista = js.map((j, i) => `<div class="pl"><span class="num">${i + 1}</span>${avImg(j.id === V.yo.id ? (miLook() || j.look) : j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${j.id === s.anfitrion ? '<span class="tg">anfitrión</span>' : ''}${j.bot ? '<span class="tg">bot</span>' : ''}${j.id === V.yo.id ? '<span class="tg">tú</span>' : ''}</span><span class="dot${conectado(j.id) ? '' : ' off'}" title="${conectado(j.id) ? 'Conectado' : 'Sin conexión'}"></span>${host && j.id !== V.yo.id ? `<button class="kick" data-kick="${j.id}" aria-label="Sacar a ${esc(j.nombre)}">✕</button>` : ''}</div>`).join('');
   pinta('saLista', lista);
   pinta('saAjustes', ajustesHTML(s.config, host, jugadores));
+  renderPruebasSala();
   $('saEmpezar').hidden = !host;
   $('saEmpezar').disabled = jugadores < 4;
   $('saNota').textContent = host
@@ -156,6 +158,7 @@ export function iniciaSala() {
   $('saLista').addEventListener('click', e => {
     const k = e.target.closest('[data-kick]'); if (!k) return;
     const j = E.V.jugadores.find(x => x.id === k.dataset.kick); if (!j) return;
+    if (j.bot) { accion('expulsar', { p_id: j.id }).catch(err => toast(textoError(err))); return }
     sheet(`<h3>¿Sacar a ${esc(j.nombre)}?</h3><p>Saldrá de la sala. Podrá volver a entrar con el código.</p><button class="act danger" id="kkSi">Sacar</button><button class="link" id="kkNo">Cancelar</button>`, () => {
       $('kkNo').onclick = closeSheet;
       $('kkSi').onclick = () => { closeSheet(); accion('expulsar', { p_id: j.id }).catch(err => toast(textoError(err))) };

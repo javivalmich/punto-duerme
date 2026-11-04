@@ -8,6 +8,7 @@ import { E, actualiza, accion, guardaSesion, sesionGuardada, olvida } from './es
 import { avLoad, iniciaCuentas, ganchos, miLook, miNombre } from './cuenta.js';
 import { iniciaSala, renderSala, irInicio, abrirUnir, renderInicio, limpiaCodigo } from './sala.js';
 import { iniciaPartida, renderJuego, pintaCuentas } from './partida.js';
+import { iniciaPruebas } from './pruebas.js';
 
 /* Cada vez que llega una vista nueva (o cambia algo local), se pinta la pantalla que toca */
 function render() {
@@ -43,7 +44,7 @@ setInterval(() => { if (E.ses && !document.hidden) actualiza() }, 15000); /* res
 setInterval(() => { if (E.ses && E.V) pintaCuentas() }, 250);
 
 function arranca() {
-  iniciaSala(); iniciaPartida(); avLoad(); iniciaCuentas();
+  iniciaSala(); iniciaPartida(); iniciaPruebas(); avLoad(); iniciaCuentas();
   $('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet() });
   /* Enlace de sala (?s=CÓDIGO): si ya estoy en esa partida, vuelvo a ella; si no, voy a «Unirme» con el código */
   const c = limpiaCodigo(QS.get('s'));

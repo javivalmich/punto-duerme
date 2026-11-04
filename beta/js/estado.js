@@ -15,7 +15,7 @@ export const jug = id => E.V ? E.V.jugadores.find(j => j.id === id) : null;
 export const nombreDe = id => { const j = jug(id); return j ? j.nombre : '' };
 export const soyAnfitrion = () => !!(E.V && E.V.sala.anfitrion === E.V.yo.id);
 export const soyNarrador = () => !!(E.V && E.V.sala.narrador === E.V.yo.id);
-export const conectado = id => E.pres.has(id) || (E.V && id === E.V.yo.id);
+export const conectado = id => E.pres.has(id) || (E.V && (id === E.V.yo.id || E.V.jugadores.some(j => j.id === id && j.bot)));
 
 export function sesionGuardada() {
   const s = lsGet('partida', null);

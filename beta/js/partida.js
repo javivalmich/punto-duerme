@@ -12,6 +12,7 @@ import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
 import { di, calla, silencia, VOZ } from './narrador.js';
 import { suena } from './sonido.js';
+import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
 const NARRADAS = ['anochece', 'amanece', 'resultado'];
@@ -68,10 +69,10 @@ function renderAviso() {
   if (AUS.desde && Date.now() - AUS.desde > 30000 && s.fase !== 'final')
     h += `<div class="aviso">El móvil del narrador (${esc(nombreDe(n))}) no está conectado. <button class="act sec" data-a="sernarr">Ser yo el narrador</button></div>`;
   if (!me.vivo && s.fase !== 'final') h += `<div class="elimban">ESTÁS FUERA<small>Sigue la partida en silencio: ya no votas ni actúas.</small></div>`;
-  pinta('jAviso', h);
+  pinta('jAviso', h + avisoPruebas());
 }
 
-const fila = (j, extra = '') => `<div class="pl${j.vivo ? '' : ' dead'}">${avImg(j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${extra}</span></div>`;
+const fila = (j, extra = '') => `<div class="pl${j.vivo ? '' : ' dead'}">${avImg(j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${ptag(j)}${extra}</span></div>`;
 const listaJug = (V, f) => `<div class="plist">${V.jugadores.filter(j => f ? f(j) : true).map(j => fila(j, j.fuera ? '<span class="tg">ha salido</span>' : '')).join('')}</div>`;
 const vivos = V => V.jugadores.filter(j => j.vivo);
 
@@ -106,7 +107,7 @@ const CUERPO = {
     const lista = vivos(V).filter(j => j.id !== me.id).map(j => {
       const comp = punto && j.rol === 'punto';
       const quien = punto ? Object.keys(marcas).filter(p => marcas[p] === j.id && p !== me.id).map(nombreDe) : [];
-      return `<button class="vbtn${mia === j.id ? ' on' : ''}${comp ? ' comp' : ''}" data-marca="${j.id}" ${comp || conf ? 'disabled' : ''}>${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${comp ? '<span class="tg">Punto</span>' : ''}${quien.length ? `<span class="tg marca">${esc(listaNombres(quien))}</span>` : ''}<span class="chk">✓</span></button>`;
+      return `<button class="vbtn${mia === j.id ? ' on' : ''}${comp ? ' comp' : ''}" data-marca="${j.id}" ${comp || conf ? 'disabled' : ''}>${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${comp ? '<span class="tg">Punto</span>' : ptag(j)}${quien.length ? `<span class="tg marca">${esc(listaNombres(quien))}</span>` : ''}<span class="chk">✓</span></button>`;
     }).join('');
     let puede, nota = '';
     if (punto) {
@@ -133,7 +134,7 @@ const CUERPO = {
     const me = V.yo, actua = me.vivo, vs = vivos(V), mio = V.mio.voto;
     const prog = `<div class="vprog">Han votado <b>${V.votos || 0}/${vs.length}</b><span class="bar"><i style="width:${vs.length ? Math.round(100 * (V.votos || 0) / vs.length) : 0}%"></i></span></div>`;
     if (!actua) return { fijo: `<div class="phase"><p class="pt">Votación</p><p>Los jugadores vivos están votando en su móvil.</p></div>`, vivo: prog };
-    const lista = vs.filter(j => j.id !== me.id).map(j => `<button class="vbtn${mio === j.id ? ' on' : ''}" data-voto="${j.id}">${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span><span class="chk">✓</span></button>`).join('');
+    const lista = vs.filter(j => j.id !== me.id).map(j => `<button class="vbtn${mio === j.id ? ' on' : ''}" data-voto="${j.id}">${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${ptag(j)}<span class="chk">✓</span></button>`).join('');
     return {
       fijo: `<div class="phase"><p class="pt">¿A quién echáis del pueblo?</p><p>Puedes cambiar tu voto hasta que voten todos.</p></div>`,
       vivo: `<div class="vlist">${lista}</div>${prog}`
@@ -234,6 +235,7 @@ function menu() {
   sheet(`<div class="menuhead"><h3>Partida ${esc(s.codigo)}</h3><button class="xbtn" id="mnX" aria-label="Cerrar">✕</button></div>
     ${me.rol && enJuego ? '<button class="menuitem" id="mnRol">Ver mi papel</button>' : ''}
     ${soyNarrador() ? `<button class="menuitem" id="mnMudo">${VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador'}</button>` : '<button class="menuitem" id="mnNarr">Ser yo el narrador</button>'}
+    ${hayPruebas() ? '<button class="menuitem" id="mnPru">Panel de pruebas</button>' : ''}
     <button class="menuitem" id="mnComo">Cómo se juega</button>
     <div class="menusep">${soyAnfitrion() && enJuego ? '<button class="menuitem danger" id="mnFin">Terminar la partida</button>' : ''}<button class="menuitem exit" id="mnSalir">Salir de la partida</button></div>`, () => {
     $('mnX').onclick = closeSheet;
@@ -242,6 +244,7 @@ function menu() {
     if ($('mnNarr')) $('mnNarr').onclick = () => sheet(`<h3>¿Ser el narrador?</h3><p>Tu móvil pondrá la voz y los sonidos de la partida. Úsalo si el móvil del narrador se ha quedado sin batería o sin conexión.</p><button class="act" id="snSi">Ser el narrador</button><button class="link" id="snNo">Cancelar</button>`, () => {
       $('snNo').onclick = closeSheet; $('snSi').onclick = () => { closeSheet(); serNarrador() };
     });
+    if ($('mnPru')) $('mnPru').onclick = abrePanelPruebas;
     $('mnComo').onclick = () => sheet(`<h3>Cómo se juega</h3><p>De noche, todos miran su móvil y tocan a alguien: los Puntos eligen a quién eliminar (si son varios, tienen que coincidir) y los Ciegos marcan de quién sospechan. De día se anuncia quién ha muerto, se debate y se vota: el más votado sale del pueblo; si hay empate, nadie.</p><p>Ganan los Ciegos si no queda ningún Punto. Ganan los Puntos si llegan a ser tantos como los Ciegos.</p><button class="act" id="cmX">Entendido</button>`, () => { $('cmX').onclick = closeSheet });
     if ($('mnFin')) $('mnFin').onclick = () => sheet(`<h3>¿Terminar la partida?</h3><p>Todos volveréis a la sala de espera y se verán los papeles de esta partida perdidos.</p><button class="act danger" id="tfSi">Terminar</button><button class="link" id="tfNo">Cancelar</button>`, () => {
       $('tfNo').onclick = closeSheet; $('tfSi').onclick = () => { closeSheet(); accion('a_la_sala').catch(e => toast(textoError(e))) };

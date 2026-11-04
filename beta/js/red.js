@@ -42,7 +42,8 @@ export const MENSAJES = {
   llena: 'La sala está llena (20 jugadores).',
   pocos: 'Hacen falta al menos 4 jugadores.',
   solo_anfitrion: 'Solo el anfitrión puede hacer eso.',
-  no_estas: 'Ya no estás en esa partida.'
+  no_estas: 'Ya no estás en esa partida.',
+  sin_pruebas: 'Las pruebas con bots están desactivadas.'
 };
 export const textoError = e => MENSAJES[e && e.message] || (/fetch|network|timeout/i.test(e && e.message || '') ? 'No hay conexión. Prueba otra vez.' : 'Algo ha fallado. Prueba otra vez.');
 

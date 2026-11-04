@@ -10,7 +10,7 @@ Juego de Punto Studio del estilo «el pueblo duerme / los hombres lobo». Cada j
 
 Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de seguir.
 
-1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha y probada por el usuario; ajustes posteriores: narrador = jugador más, botón de portada, estética propia)**
+1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha y probada por el usuario; ajustes posteriores: narrador = jugador más, botón de portada, estética propia, bots de prueba)**
 2. Bruja, Cupido y Vidente.
 3. Modo de un solo móvil.
 4. Música y efectos.
@@ -56,6 +56,7 @@ beta/
   js/estado.js                 sesión guardada (5 h), vista actual, sincronización con el servidor
   js/red.js                    Supabase: rpc('…') → duerme_…, canal en tiempo real y presencia
   js/sala.js                   portada, crear, unirse, sala de espera y ajustes
+  js/pruebas.js                bots y panel de pruebas (solo beta)
   js/partida.js                pantallas de cada fase, director del narrador, temporizadores, menú
   js/roles.js                  catálogo de personajes (presentación) y Puntos sugeridos
   js/narrador.js               voz (speechSynthesis), cola de frases, silenciar
@@ -88,6 +89,15 @@ Identidad propia dentro de Punto Studio: mismas mascota, tipografía (Outfit), e
 - **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (y en `img/logo.svg`).
 - **Logo**: `beta/img/logo.svg` es **provisional**. Para el definitivo: sustituir ese archivo (cuadrado, con su fondo) y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). Mientras tanto los iconos salen del logo provisional.
 - La propuesta de diseño (maqueta) está en `design/propuesta.html` (no se publica).
+
+## Bots de prueba (solo beta)
+
+Para probar con un único móvil. El anfitrión, en la sala de espera, pulsa «Añadir bot (pruebas)» (Bot Ana, Bot Luis…; ✕ para quitarlos). Cuentan para el mínimo de 4 jugadores.
+
+- **Los mueve el servidor** (`supabase/migrations/20261105100000_duerme_bots.sql`): `duerme_tick` programa a cada bot con un retraso aleatorio de 2–7 s al empezar cada fase y ejecuta los que ya les toca (`_duerme_bot_paso`): reparto → «Ya lo he visto»; noche → marcan (los Puntos copian al Punto que ya haya marcado, los humanos primero, así dos Puntos coinciden) y confirman 1,5–5 s después; votación → votan al azar o al forzado. El móvil del anfitrión solo llama a `duerme_tick` cada 2 s (`pruebas.js`) para dar la hora; no decide nada. Nunca son anfitrión ni narrador (`_duerme_quita`).
+- **Panel de pruebas** (plegable en la sala; en partida, ☰ → «Panel de pruebas»), solo anfitrión: «Ver roles de los bots» (la vista incluye el papel de los bots solo para el anfitrión de esa sala con el interruptor; los de personas nunca), y «Los bots marcan a / votan a» para forzar un jugador (si no es válido, al azar).
+- **Seguridad**: tablas con RLS sin permisos, funciones internas sin acceso. Interruptor global `duerme_flags('pruebas')`: con `update duerme_flags set valor = false where clave = 'pruebas';` los bots y el panel dejan de funcionar en el servidor aunque alguien llame a las funciones a mano. **Hazlo antes de lanzar el juego.** En el cliente solo aparece si la ruta contiene `/beta/` (`EN_BETA` en `pruebas.js`).
+- **Fase 2**: para que los bots hagan de Bruja, Cupido y Vidente basta añadir su rama en `_duerme_bot_paso` (y su fase en `duerme_tick`); calendario, forzados y panel ya valen para todos los papeles.
 
 ## Sincronización entre móviles
 

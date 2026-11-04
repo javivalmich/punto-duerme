@@ -435,13 +435,17 @@ p.vprog b{color:var(--text)}
 }
 .screen,#editor{position:relative;z-index:1}
 
-/* botones: relleno de acento, sombra dura gris, se hunden al pulsar */
-.act{background:var(--acc);color:var(--accT);box-shadow:0 5px 0 var(--btn)}
-.act.sec{background:transparent;color:var(--text);border:2px solid var(--line);box-shadow:0 5px 0 var(--btn)}
-.act.danger{background:transparent;color:var(--pel);border:2px solid var(--pel);box-shadow:0 5px 0 var(--btn)}
-.act.google,.act.apple{box-shadow:0 5px 0 var(--btn)}
-.act:is(.prs,:active):not(:disabled){transform:translateY(5px);box-shadow:0 0 0 var(--btn)}
-.act:disabled{opacity:.5;box-shadow:none}
+/* botones: el borde inferior es un tono más oscuro del propio color del botón y se hunde al pulsar */
+.act{background:var(--acc);color:var(--accT);box-shadow:0 5px 0 color-mix(in srgb,var(--acc) 58%,#000)}
+.act.sec{background:var(--surface2);color:var(--text);border:2px solid var(--line);border-bottom-width:2px;box-shadow:0 5px 0 color-mix(in srgb,var(--surface2) 45%,#000)}
+.act.danger{background:var(--surface);color:var(--pel);border:2px solid var(--pel);box-shadow:0 5px 0 color-mix(in srgb,var(--pel) 50%,#000)}
+.act.google{box-shadow:0 5px 0 #a9abb8}
+.act.apple{box-shadow:0 5px 0 #3a3a3e}
+.vbtn{box-shadow:0 4px 0 color-mix(in srgb,var(--surface) 50%,#000)}
+.vbtn.on{box-shadow:0 4px 0 color-mix(in srgb,var(--acc) 58%,#000)}
+.act:is(.prs,:active):not(:disabled){transform:translateY(5px);box-shadow:0 0 0 transparent}
+.vbtn:is(.prs,:active):not(:disabled){transform:translateY(4px);box-shadow:0 0 0 transparent}
+.act:disabled,.vbtn:disabled{opacity:.5;box-shadow:none}
 button:focus-visible,input:focus-visible,summary:focus-visible,.card:focus-visible{outline:3px solid var(--acc)}
 .logo{background:none;filter:drop-shadow(0 10px 26px color-mix(in srgb,var(--acc) 30%,transparent))}
 .tag{color:var(--acc)}
@@ -484,6 +488,10 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 .ganan{border-color:var(--acc)}
 .ganan.puntos{background:radial-gradient(circle at 50% 30%,#8a2447 0,#4a1230 55%,#2a0a1c 100%);color:#ffe8ee;border-color:var(--pel)}
 #cielo .disco{opacity:calc(var(--sol-o) * .3)}
-.act.sec{background:color-mix(in srgb,var(--bg) 72%,transparent)}
 .sheet{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
 .wrap{padding-top:36px}
+
+/* panel de pruebas (solo beta) */
+.sel{width:auto;max-width:52%;min-width:0;padding:9px 10px;font-size:.95rem;font-weight:700;background:var(--surface2);color:var(--text);border:2px solid var(--line);border-radius:12px}
+#saPruebas .act{margin-bottom:10px}
+#saBot{margin-top:12px}
