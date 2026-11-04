@@ -64,7 +64,7 @@ beta/
   js/textos-narrador.js        todas las frases del narrador
   js/sonido.js                 sonidos (solo en el móvil del narrador)
   js/cuenta.js, js/cabeza.js   cuenta opcional y personaje (de Punto Falso; listas de colores = Punto Ciego)
-  img/logo.png, icono.png      logo con texto (portada) e icono sin texto (iconos de la app)
+  img/logo.png, emblema.png    logo con texto (portada) y emblema sin texto (iconos de la app); ambos transparentes
   assets/personaje3d.js, .bin  personaje 3D del editor (de Punto Ciego)
   audio/*.wav                  sonidos provisionales (noche, amanecer, muerte, votacion, eliminado, tic, victoria-…)
   vendor/                      supabase-js (UMD) y qrcode
@@ -72,7 +72,8 @@ beta/
   soporte.html, terminos.html  adaptados de Punto Falso; privacidad.html redirige a /privacidad/
 supabase/migrations/           tablas y funciones del juego (aplicadas en el proyecto «Punto ciego», qsmcdfyyxvqmesnbwsod)
 scripts/sonidos-provisionales.mjs   genera los .wav provisionales
-scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/icono.png
+scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/emblema.png
+scripts/quita-fondo.py              quita el fondo blanco de un logo aplanado (los PNG llegaron sin canal alfa; ver su cabecera)
 ```
 
 Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
@@ -83,22 +84,28 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 
 - Audios en `beta/audio/voz/<id>-<n>.mp3` (id de frase de `textos-narrador.js`, n = variante desde 1) y `indice.json` (lista de los que existen). `narrador.js` localiza cada frase por su texto, la reproduce como blob y, si falta cualquier audio, habla la voz del navegador. Los audios se precargan en memoria y el service worker los mete en su caché al instalarse (`sw.js`, lee `indice.json`), así suenan también sin conexión en el modo de un solo móvil.
 - **Las frases no llevan nombres ni tiempos** (no se pueden pregrabar): el narrador dice «este jugador» y el nombre sale grande en pantalla; el tiempo del debate sale en el reloj.
-- **Configuración** (`scripts/voz-config.json`, sin la clave): modelo `gemini-3.8-flash-tts`, voz `Riko`, `temperature` 1; instrucción «narrador nativo de Madrid, español de España con acento castellano, sin acento extranjero, c y z como en España, tono de cuento de misterio»; tres estilos (`rich`, `hushed`, `tense`) que se pasan como `speech_metadata.style`. No se cambian sin que lo pida el usuario.
+- **Configuración** (`scripts/voz-config.json`, sin la clave): modelo `gemini-3.8-flash-tts`, voz `Riko`, `temperature` 0,7; instrucción «narrador nativo de Madrid, español de España con acento castellano, sin acento extranjero, c y z como en España, tono de cuento de misterio»; estilos `rich`, `tense` y `hushed` (este último: «Low, mysterious, suspenseful night-time narration, spoken softly but clearly projected so a whole room can hear it…», para que se oiga en una sala) que se pasan como `speech_metadata.style`. No se cambian sin que lo pida el usuario.
 - **Entonación** de cada frase: `TONO` en `textos-narrador.js` (hushed = noche; tense = muertes, votación y eliminados; rich = bienvenida, amanecer, debate y final).
-- **Generar o regenerar**: `pip install google-genai lameenc` y `python scripts/voz.py` (genera lo que falta; si se corta, se vuelve a ejecutar y continúa; reintenta con espera ante el límite del plan gratuito y para al agotar la cuota diaria; descarta tomas absurdamente largas). `--solo id-n`, `--regenerar id-n`, `--incluir-espera` (frases marcadas `en_espera` en la config). **Si cambias el texto de una frase, regenera su audio** (bórralo y ejecuta el script) y sube `VERSION` en `sw.js`.
-- **Clave**: `GEMINI_API_KEY` solo en `.env` en la raíz (está en `.gitignore`; no se sube ni se escribe en otro archivo).
-- **Condiciones**: los términos de la API de Gemini (aistudio.google.com/docs/terms) no reclaman la propiedad del contenido generado y encajan con uso profesional; en el plan gratuito Google puede usar prompts y respuestas para mejorar sus productos (aquí solo van frases del juego, sin datos personales) y piden atribución cuando el contenido se devuelve en una llamada a la API (no es el caso: se pregraba). Revisar los términos antes de un lanzamiento comercial.
+- **Textos**: el narrador solo cuenta la historia con tono de cuento; **nunca da órdenes de juego ni avisos de tiempo** (eso lo dicen la pantalla y el reloj). Sin nombres ni tiempos (no se pueden pregrabar): «este jugador» + nombre grande en pantalla.
+- **Generar o regenerar** (`python scripts/voz.py`; `pip install google-genai lameenc numpy scipy pyloudnorm`):
+  - Agrupa hasta 8 frases de la misma entonación por petición (separadas con pausas largas) y corta por los silencios; exige tantos trozos como frases y duraciones razonables, si no repite solo ese lote.
+  - **Masterizado fijo de cada audio**: compresión suave → -14 LUFS → limitador a -1 dBFS (MP3 96 kbps mono).
+  - Límite gratuito: 10 peticiones al día (contadas en `scripts/.voz-estado.json`, ignorado); al agotarlo para y, al volver a ejecutarlo otro día, continúa donde se quedó (salta lo ya hecho). Las tomas descartadas también gastan cupo.
+  - **`audio/voz/indice.json` solo lista los audios cuando existen todos**; mientras falte alguno queda en `[]` y la app usa solo la voz del navegador (sin mezclar voces). `scripts/voz-lista.md` lleva id, entonación, duración y texto de cada audio.
+  - `--regenerar id-n …` rehace frases concretas. **Si cambias el texto de una frase, ejecuta el script** (borra los audios de frases que ya no existen y genera los que faltan) y sube `VERSION` en `sw.js`.
+- **Clave**: `GEMINI_API_KEY` solo en `.env` en la raíz (en `.gitignore`; no se sube ni se escribe en otro archivo).
+- **Condiciones**: los términos de la API de Gemini (aistudio.google.com/docs/terms) no reclaman la propiedad del contenido generado y encajan con uso profesional; en el plan gratuito Google puede usar prompts y respuestas para mejorar sus productos (aquí solo frases del juego, sin datos personales). Revisar los términos antes de un lanzamiento comercial.
 
 ## Estética
 
 Identidad propia dentro de Punto Studio: mismas mascota, tipografía (Outfit), estructura de pantallas y botones con sombra dura gris, pero paleta nocturna. **No se usa el estilo «expediente» ni la skill punto-studio-design** (descartada para este juego).
 
-- **Noche** (portada, sala, reparto, anochece, noche): azul noche `#0B1030`, cielo índigo `#1A2260`, acento **amarillo luna** `#F4C25A`, coral `#FF7A8C` solo para Puntos/muertes/errores.
+- **Noche** (portada, sala, reparto, anochece, noche): azul noche `#0B1030`, cielo índigo `#1A2260`, acento **amarillo luna** `#F7C75B`, coral `#FF7A8C` solo para Puntos/muertes/errores.
 - **Amanecer y día** (amanece, debate, votación, resultado, final): **siempre oscuro y cálido** (se juega con poca luz; nunca fondo claro): morado `#1D1233`/`#5A2A55`, acento melocotón `#FFB46B`, texto `#FFF1E4`, carmesí/rosa `#FF8FA0` para Puntos. Contraste AA comprobado.
 - Los colores son variables en `:root` (`--bg --bg2 --surface --surface2 --line --text --muted --acc --accT --pel --btn --glow`), registradas con `@property` para que se fundan en ~1,6 s. `tema(fase)` (en `util.js`) pone en `<html>` la clase `fase-noche | fase-alba | fase-dia`; se llama desde `renderJuego` y al volver a la sala/portada.
 - Cielo (`#cielo`, fijo detrás de todo): estrellas, brillos que parpadean, niebla que se desplaza, luna (de noche) y sol que sale por el horizonte (alba) y sube un poco (día). Solo CSS y `transform`/`opacity`; respeta `prefers-reduced-motion`.
-- **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (actual: #F4C25A, el amarillo de la luna del logo).
-- **Logos** definitivos: `beta/img/logo.png` (con texto, portada) y `beta/img/icono.png` (sin texto, de él salen los iconos). Para cambiarlos: sustituir esos archivos y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). 
+- **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (actual: #F7C75B, el amarillo de la luna del logo).
+- **Logos** definitivos: `beta/img/logo.png` (con texto, portada, fondo transparente) y `beta/img/emblema.png` (sin texto, transparente; de él salen los iconos sobre fondo azul noche). Para cambiarlos: sustituir esos archivos y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). 
 - La propuesta de diseño (maqueta) está en `design/propuesta.html` (no se publica).
 
 ## Modo de un solo móvil

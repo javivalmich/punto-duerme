@@ -5,3 +5,5 @@ Thumbs.db
 !.claude/launch.json
 design/
 .env
+scripts/.voz-estado.json
+design/

@@ -12,14 +12,14 @@
 @property --line{syntax:'<color>';inherits:true;initial-value:#2b3470}
 @property --text{syntax:'<color>';inherits:true;initial-value:#eef0ff}
 @property --muted{syntax:'<color>';inherits:true;initial-value:#a4acdc}
-@property --acc{syntax:'<color>';inherits:true;initial-value:#f4c25a}
+@property --acc{syntax:'<color>';inherits:true;initial-value:#f7c75b}
 @property --accT{syntax:'<color>';inherits:true;initial-value:#1b1740}
 @property --pel{syntax:'<color>';inherits:true;initial-value:#ff7a8c}
 @property --btn{syntax:'<color>';inherits:true;initial-value:#4b5173}
 @property --glow{syntax:'<color>';inherits:true;initial-value:#6e82ff}
 :root{
   --bg:#0b1030; --bg2:#1a2260; --surface:#141b45; --surface2:#1e2760; --line:rgba(160,175,255,.2);
-  --text:#eef0ff; --muted:#a4acdc; --acc:#f4c25a; --accT:#1b1740; --pel:#ff7a8c; --btn:#4b5173; --glow:rgba(110,130,255,.3);
+  --text:#eef0ff; --muted:#a4acdc; --acc:#f7c75b; --accT:#1b1740; --pel:#ff7a8c; --btn:#4b5173; --glow:rgba(110,130,255,.3);
   --red:var(--acc); --red-d:color-mix(in srgb,var(--acc) 60%,#000); --red-press:color-mix(in srgb,var(--acc) 84%,#000); --visor:#0e0e11;
   --estrellas:1; --niebla:1; --sol-y:120%; --sol-o:0; --luna-o:1;
   color-scheme:dark; box-sizing:border-box;
@@ -504,4 +504,5 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 .step output{white-space:nowrap}
 
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.hero .logo{width:min(80vw,320px,38dvh);border-radius:12%;background:#000;filter:drop-shadow(0 8px 30px color-mix(in srgb,var(--acc) 22%,transparent))}
+.hero .logo{width:auto;height:auto;max-width:min(82vw,330px);max-height:42dvh;aspect-ratio:auto;border-radius:0;background:none;margin:0 auto 4px;filter:drop-shadow(0 6px 26px color-mix(in srgb,var(--acc) 18%,transparent))}
+.lema{font-weight:300;font-size:clamp(.72rem,3.5vw,.86rem);letter-spacing:.32em;text-indent:.32em;color:var(--muted);text-align:center;margin-top:6px}
