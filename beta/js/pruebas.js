@@ -13,7 +13,7 @@ const verRoles = () => !!(E.V && E.V.sala.pruebas && E.V.sala.pruebas.ver_roles)
 
 /* etiqueta con el papel de un bot (solo llega si el servidor lo envía: anfitrión con «ver roles de los bots») */
 export const ptag = j => j && j.bot && j.rol && verRoles() ? `<span class="tg ${j.rol === 'punto' ? 'rojo' : ''}">${j.rol === 'punto' ? 'Punto' : 'Ciego'}</span>` : '';
-export const avisoPruebas = () => hayPruebas() && verRoles() ? '<div class="aviso">Modo pruebas: ves el papel de los bots.</div>' : '';
+export const avisoPruebas = () => hayPruebas() && verRoles() ? '<div class="aviso pruebas">Modo pruebas: ves el papel de los bots.</div>' : '';
 
 function panelHTML(V, enSala) {
   const p = V.sala.pruebas, js = V.jugadores.filter(j => !j.fuera);

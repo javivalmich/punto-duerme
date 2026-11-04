@@ -32,6 +32,18 @@
   --estrellas:.12; --niebla:.5; --sol-y:34%; --sol-o:.95; --luna-o:0;
 }
 :root.fase-dia{--sol-y:8%; --glow:rgba(255,170,100,.34)}
+/* Noche de juego (todos con los ojos cerrados): casi negra y de poco brillo, para que nadie vea qué móvil se ilumina */
+:root.fase-oscura{
+  --bg:#000; --bg2:#000; --surface:#0a0a0f; --surface2:#101018; --line:rgba(255,255,255,.08);
+  --text:#7a7e9a; --muted:#686c86; --acc:#8c7530; --accT:#050505; --pel:#a2505e; --glow:rgba(0,0,0,0);
+  --estrellas:0; --niebla:0; --sol-o:0; --luna-o:0;
+}
+html.fase-oscura #jNarra{display:none}
+html.fase-oscura #jAviso .elimban{display:none}
+html.fase-oscura #cielo *{animation:none!important}
+.sueno{padding-top:26vh}
+.sueno .pt{font-weight:600;font-size:1.3rem;letter-spacing:.04em}
+.sueno p:last-child{font-size:.95rem;margin-top:4px}
 *,*::before,*::after{box-sizing:border-box}
 html{height:100%;overscroll-behavior-y:none;background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100%;color:var(--text);font:16px/1.5 Outfit,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
@@ -509,3 +521,4 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 
 .suspense{font-weight:900;font-size:4rem;line-height:1;color:var(--muted);letter-spacing:.2em;animation:pulso 1.2s ease-in-out infinite alternate}
 @keyframes pulso{from{opacity:.3}to{opacity:1}}
+html.fase-oscura #jAviso .pruebas{display:none}

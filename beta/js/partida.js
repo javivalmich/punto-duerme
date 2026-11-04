@@ -14,8 +14,8 @@ import { di, calla, silencia, VOZ, duracionTexto } from './narrador.js';
 import { suena } from './sonido.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
 
-export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
-const NARRADAS = ['anochece', 'amanece', 'resultado'];
+export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
+const NARRADAS = ['anochece', 'noche_cierra', 'amanece', 'resultado'];
 
 /* ---------- Lo que dice el narrador en cada fase (también sale como subtítulo en todos los móviles) ---------- */
 export const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
@@ -23,8 +23,9 @@ export function textoFase(V) {
   const s = V.sala, p = s.publico || {}, sem = s.codigo + s.ronda + s.fase;
   switch (s.fase) {
     case 'reparto': return texto('bienvenida', null, sem);
-    case 'anochece': return texto(s.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sem) + ' | ' + texto('puntos_abre', null, sem);
-    case 'noche': return '';
+    case 'anochece': return texto(s.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sem);
+    case 'noche': return texto('puntos_abre', null, sem);
+    case 'noche_cierra': return texto('puntos_cierra', null, sem);
     case 'amanece': {
       const m = p.muertos || [];
       return texto('amanece_inicio', null, sem) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sem) : m.length ? texto('amanece_muerto', null, sem) : texto('amanece_nadie', null, sem));
@@ -55,7 +56,7 @@ export function renderJuego() {
   const mudo = $('jMudo'); mudo.hidden = !soyNarrador();
   mudo.innerHTML = VOZ.mudo ? ICO_MUDO : ICO_VOZ; mudo.setAttribute('aria-label', VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador');
   pinta('jNarra', esc(subtitulo(textoFase(V))));
-  const f = CUERPO[s.fase] ? CUERPO[s.fase](V) : { fijo: '', vivo: '' };
+  const f = CUERPO[s.fase === 'noche_cierra' ? 'noche_cierra' : s.fase] ? CUERPO[s.fase](V) : { fijo: '', vivo: '' };
   const k = s.fase + '|' + s.ronda + '|' + s.desde + '|' + me.vivo + '|' + revelado(V);
   if (k !== FIJO_K) { FIJO_K = k; $('jFijo').innerHTML = f.fijo; $('jFijo')._h = f.fijo }
   else pinta('jFijo', f.fijo.includes('rolCard') ? $('jFijo')._h : f.fijo);
@@ -95,6 +96,9 @@ export function cartaRolHTML(r, comp) {
   </div>`;
 }
 
+const duerme = V => ({ fijo: V.yo.vivo
+  ? `<div class="phase sueno"><p class="pt">Duerme…</p><p>Mantén los ojos cerrados.</p></div>`
+  : `<div class="phase sueno"><p class="pt">Estás fuera</p><p>Guarda silencio hasta que amanezca.</p></div>`, vivo: '' });
 const CUERPO = {
   reparto(V) {
     const me = V.yo, vs = vivos(V), listos = vs.filter(j => j.listo).length, mio = jug(me.id);
@@ -103,28 +107,25 @@ const CUERPO = {
       vivo: (mio && mio.listo ? `<p class="espera">Esperando a los demás…</p>` : `<button class="act" data-a="listo">Ya lo he visto</button>`) + `<p class="vprog">Listos <b>${listos}/${vs.length}</b></p>`
     };
   },
-  anochece(V) {
-    return { fijo: `<div class="phase"><p class="pt">El pueblo se duerme</p><p>Escucha al narrador y prepárate para mirar tu móvil.</p></div>`, vivo: '' };
-  },
+  /* De noche todos cierran los ojos y solo actúa quien el narrador llama: pantalla casi negra y discreta */
+  anochece(V) { return duerme(V) },
   noche(V) {
-    const me = V.yo, actua = me.vivo, punto = me.rol === 'punto';
-    if (!actua) return { fijo: `<div class="phase"><p class="pt">Es de noche</p><p>Estás fuera: mira en silencio.</p></div>`, vivo: '' };
+    const me = V.yo, punto = me.rol === 'punto';
+    if (!(me.vivo && punto)) return duerme(V);
     const vp = V.jugadores.filter(j => j.rol === 'punto' && j.vivo);
-    const fijo = `<div class="phase"><p class="pt">Elige a un jugador</p><p class="hintrol">${punto ? (vp.length > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.') : 'Marca de quién sospechas.'}</p></div>`;
+    const fijo = `<div class="phase"><p class="pt">Elige a la víctima</p><p class="hintrol">${vp.length > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.'}</p></div>`;
     const marcas = V.marcas || {}, mia = V.mio.marca, conf = 'confirma' in V.mio;
     const lista = vivos(V).filter(j => j.id !== me.id).map(j => {
-      const comp = punto && j.rol === 'punto';
-      const quien = punto ? Object.keys(marcas).filter(p => marcas[p] === j.id && p !== me.id).map(nombreDe) : [];
+      const comp = j.rol === 'punto';
+      const quien = Object.keys(marcas).filter(p => marcas[p] === j.id && p !== me.id).map(nombreDe);
       return `<button class="vbtn${mia === j.id ? ' on' : ''}${comp ? ' comp' : ''}" data-marca="${j.id}" ${comp || conf ? 'disabled' : ''}>${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${comp ? '<span class="tg">Punto</span>' : ptag(j)}${quien.length ? `<span class="tg marca">${esc(listaNombres(quien))}</span>` : ''}<span class="chk">✓</span></button>`;
     }).join('');
-    let puede, nota = '';
-    if (punto) {
-      const todos = vp.every(p => marcas[p.id] && marcas[p.id] === mia);
-      puede = !!mia && (vp.length === 1 || todos);
-      if (mia && !puede) nota = 'Tenéis que marcar todos al mismo para confirmar.';
-    } else { puede = !!mia && !conf; if (conf) nota = 'Hecho. Espera a que amanezca.' }
+    const todos = vp.every(p => marcas[p.id] && marcas[p.id] === mia);
+    const puede = !!mia && !conf && (vp.length === 1 || todos);
+    const nota = conf ? 'Hecho. Espera a que el narrador te duerma.' : mia && !puede ? 'Tenéis que marcar todos al mismo para confirmar.' : '';
     return { fijo, vivo: `<div class="vlist">${lista}</div><button class="act" data-a="confirma" ${puede ? '' : 'disabled'}>${conf ? 'Confirmado' : 'Confirmar'}</button><p class="tiny">${nota}</p>` };
   },
+  noche_cierra(V) { return duerme(V) },
   amanece(V) {
     const m = (V.sala.publico || {}).muertos || [];
     const caja = m.length ? m.map(o => { const j = jug(o.id) || {}; return `<div class="muerto">${avImg(j.look, 'xl')}<b>${esc(j.nombre || '')}</b><span>${o.rol ? 'era ' + (o.rol === 'punto' ? 'un Punto' : 'un Ciego') : 'ha muerto esta noche'}</span></div>` }).join('')
@@ -217,7 +218,8 @@ function programaAvance() {
 export function pintaCuentas() {
   const s = E.V && E.V.sala;
   const t = s && s.hasta && s.fase !== 'final' ? Math.max(0, Math.ceil((s.hasta - ahora()) / 1000)) : null;
-  const txt = t == null || NARRADAS.includes(s.fase) || s.fase === 'reparto' ? '' : Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
+  const duermo = s && s.fase === 'noche' && !(E.V.yo.vivo && E.V.yo.rol === 'punto'); /* de noche solo ve la cuenta quien actúa */
+  const txt = t == null || duermo || NARRADAS.includes(s.fase) || s.fase === 'reparto' ? '' : Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   document.querySelectorAll('[data-cuenta]').forEach(el => { if (el.textContent !== txt) el.textContent = txt; el.classList.toggle('poco', t != null && t <= 10) });
   if (s) { renderAviso(); tic(); if (s.fase === 'resultado' && E.REV !== revelado(E.V)) { E.REV = revelado(E.V); renderJuego() } }
 }
@@ -250,7 +252,7 @@ function menu() {
       $('snNo').onclick = closeSheet; $('snSi').onclick = () => { closeSheet(); serNarrador() };
     });
     if ($('mnPru')) $('mnPru').onclick = abrePanelPruebas;
-    $('mnComo').onclick = () => sheet(`<h3>Cómo se juega</h3><p>De noche, todos miran su móvil y tocan a alguien: los Puntos eligen a quién eliminar (si son varios, tienen que coincidir) y los Ciegos marcan de quién sospechan. De día se anuncia quién ha muerto, se debate y se vota: el más votado sale del pueblo; si hay empate, nadie.</p><p>Ganan los Ciegos si no queda ningún Punto. Ganan los Puntos si llegan a ser tantos como los Ciegos.</p><button class="act" id="cmX">Entendido</button>`, () => { $('cmX').onclick = closeSheet });
+    $('mnComo').onclick = () => sheet(`<h3>Cómo se juega</h3><p>De noche todos cierran los ojos y solo despiertan los Puntos, que eligen a quién eliminar en su móvil (si son varios, tienen que coincidir). De día se anuncia quién ha muerto, se debate y se vota: el más votado sale del pueblo; si hay empate, nadie.</p><p>Ganan los Ciegos si no queda ningún Punto. Ganan los Puntos si llegan a ser tantos como los Ciegos.</p><button class="act" id="cmX">Entendido</button>`, () => { $('cmX').onclick = closeSheet });
     if ($('mnFin')) $('mnFin').onclick = () => sheet(`<h3>¿Terminar la partida?</h3><p>Todos volveréis a la sala de espera y se verán los papeles de esta partida perdidos.</p><button class="act danger" id="tfSi">Terminar</button><button class="link" id="tfNo">Cancelar</button>`, () => {
       $('tfNo').onclick = closeSheet; $('tfSi').onclick = () => { closeSheet(); accion('a_la_sala').catch(e => toast(textoError(e))) };
     });

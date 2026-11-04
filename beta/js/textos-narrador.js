@@ -9,7 +9,7 @@
    - La voz buena son audios pregrabados (audio/voz/<id>-<n>.mp3, n = variante desde 1; ver CLAUDE.md → Voz del narrador).
      Por eso ninguna frase lleva nombres ni tiempos: el nombre del jugador sale grande en pantalla y el tiempo, en el reloj.
    - El narrador SOLO cuenta la historia, con tono de cuento: nunca órdenes de juego («votad», «elegid»), avisos de tiempo ni el bando o el
-     papel de nadie (eso se ve en pantalla si «revelar el papel» está activado). De noche (multimóvil todos miran su móvil): nada de «cierran los ojos».
+     papel de nadie (eso se ve en pantalla si «revelar el papel» está activado). De noche todos cierran los ojos y solo actúa quien el narrador llama.
      Si cambias una frase, hay que regenerar su audio (node scripts/voz.mjs); mientras tanto habla la voz del navegador.
    - Regla de oro: el narrador NUNCA dice nada que revele un papel de forma indirecta. Las frases de
      cada fase son las mismas pase lo que pase (esté vivo o muerto quien sea, se haya actuado o no). */
@@ -17,14 +17,11 @@
 export const TEXTOS = {
   /* ---- noche (hushed) ---- */
   noche_cae: [
-    'Cae la noche sobre el pueblo… | y todos se quedan dormidos.',
-    'Otra noche más. | El pueblo apaga las luces y se queda dormido.',
-    'Oscurece de nuevo… | y todo el pueblo duerme.'
+    'Cae la noche sobre el pueblo… | y todos cierran los ojos.',
+    'Otra noche más. | El pueblo apaga las luces y cierra los ojos.',
+    'Oscurece de nuevo… | todos cierran los ojos.'
   ],
-  primera_noche: [
-    'Cae la primera noche sobre el pueblo… | y todos se quedan dormidos.',
-    'El sol se esconde por primera vez… | y el pueblo se queda dormido.'
-  ],
+  primera_noche: ['Cae la primera noche sobre el pueblo… | y todos cierran los ojos.'],
   puntos_abre: [
     'Los Puntos despiertan… | y buscan a su próxima víctima.',
     'En la oscuridad, los Puntos abren los ojos… | y eligen.'
