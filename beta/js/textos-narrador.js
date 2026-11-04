@@ -35,6 +35,28 @@ export const TEXTOS = {
     'Amanece en el pueblo… | Esta noche no ha muerto nadie.',
     'Sale el sol. | Todos siguen aquí. | Esta noche no ha muerto nadie.'
   ],
+  /* Modo de un solo móvil */
+  solo_reparto: [
+    'Vamos a repartir los papeles. | Cuando el móvil llegue a tus manos, mira tu papel en secreto y pásalo.',
+    'Empieza la partida. | Cada uno, cuando le llegue el móvil, mire su papel sin que nadie lo vea.'
+  ],
+  solo_noche: [
+    'Cae la noche sobre el pueblo. | Todos cerráis los ojos y dejáis el móvil en el centro.',
+    'El pueblo se va a dormir. | Cerrad los ojos y que nadie los abra hasta que yo lo diga.',
+    'Oscurece. | Todos los ojos cerrados. | Nadie mira.'
+  ],
+  puntos_abre: ['Los Puntos abren los ojos. | Que uno de vosotros coja el móvil, elija a la víctima y lo deje otra vez en el centro.'],
+  puntos_cierra: ['Los Puntos cierran los ojos.'],
+  cupido_abre: ['Cupido abre los ojos. | Que coja el móvil, elija a los dos enamorados y lo deje en el centro.'],
+  cupido_cierra: ['Cupido cierra los ojos.'],
+  vidente_abre: ['La Vidente abre los ojos. | Que coja el móvil, elija a quién quiere ver y lo deje en el centro.'],
+  vidente_cierra: ['La Vidente cierra los ojos.'],
+  bruja_abre: ['La Bruja abre los ojos. | Que coja el móvil, decida qué hace con sus pociones y lo deje en el centro.'],
+  bruja_cierra: ['La Bruja cierra los ojos.'],
+  solo_votacion: [
+    'Se acabó el debate. | Ahora votaréis uno a uno y en secreto. | Cuando el móvil llegue a tus manos, elige a quién echar del pueblo.',
+    'Hora de votar. | Os iré pasando el móvil. | Votad en secreto.'
+  ],
   era_punto: ['{nombre} era un Punto.'],
   era_ciego: ['{nombre} era un Ciego.'],
 

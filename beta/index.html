@@ -37,8 +37,10 @@
     </div>
     <p class="lead">Cada uno con su móvil. El móvil del anfitrión hace de narrador y pone la voz.</p>
     <button class="act" id="hVolver" hidden></button>
-    <button class="act" data-a="crear">Crear partida</button>
+    <button class="act" id="hVolverSolo" hidden></button>
+    <button class="act" data-a="crear">Crear partida<small>Cada uno con su móvil · necesita conexión</small></button>
     <button class="act sec" data-a="unir">Unirme</button>
+    <button class="act sec" data-a="solo">Jugar con un solo móvil<small>Un móvil que se pasa de mano en mano · sin conexión</small></button>
     <div class="panel">
       <details>
         <summary>Cómo se juega</summary>
@@ -61,6 +63,7 @@
   <div class="wrap">
     <button class="back" data-a="inicio">‹ Volver</button>
     <h2>Nueva partida</h2>
+    <p class="hint-line">Cada uno juega con su móvil y el tuyo hace de narrador (necesita conexión). ¿Solo tenéis un móvil? <button class="link inline" data-a="solo">Jugar con un solo móvil</button></p>
     <label class="lbl" for="crNom">Tu nombre</label>
     <input class="field" id="crNom" maxlength="16" autocomplete="nickname" placeholder="Cómo te verán los demás">
     <div class="panel" id="crAjustes"></div>
@@ -80,6 +83,39 @@
     <input class="field" id="unNom" maxlength="16" autocomplete="nickname" placeholder="Cómo te verán los demás">
     <p class="err" id="unErr" role="alert"></p>
     <button class="act" id="unGo">Entrar</button>
+  </div>
+</section>
+
+<!-- Un solo móvil: ajustes -->
+<section class="screen" id="s-solo-cfg">
+  <div class="wrap">
+    <button class="back" data-a="inicio">‹ Volver</button>
+    <h2>Un solo móvil</h2>
+    <p class="hint-line">Este móvil hace de narrador y os lo vais pasando de mano en mano. Funciona sin conexión. ¿Prefieres que cada uno use el suyo? <button class="link inline" data-a="crear">Crear partida en línea</button></p>
+    <div class="panel">
+      <div class="cathead"><span class="lbl">Jugadores</span><span class="sub" id="soCount"></span></div>
+      <div class="addrow"><input id="soNom" maxlength="14" placeholder="Nombre" autocomplete="off" aria-label="Nombre del jugador"><button id="soAdd">Añadir</button></div>
+      <div class="names" id="soNombres"></div>
+    </div>
+    <div class="panel" id="soAjustes"></div>
+    <p class="hostnote" id="soNota"></p>
+    <button class="act" id="soEmpezar" disabled>Empezar</button>
+  </div>
+</section>
+
+<!-- Un solo móvil: partida -->
+<section class="screen" id="s-solo">
+  <div class="wrap game">
+    <div class="gtop">
+      <div class="who"><span class="fasenom" id="soFase"></span><b class="cuenta" id="soCuenta"></b></div>
+      <div class="right">
+        <button class="menubtn" id="soMudo" aria-label="Silenciar narrador"></button>
+        <button class="menubtn" id="soMenu" aria-label="Menú">☰</button>
+      </div>
+    </div>
+    <div id="soNarra" class="narra" aria-live="polite"></div>
+    <div id="soFijo"></div>
+    <div id="soVivo"></div>
   </div>
 </section>
 

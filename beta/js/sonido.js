@@ -22,4 +22,10 @@ export function suena(nombre) {
   } catch (e) { }
 }
 /* Precarga al primer toque (los navegadores no dejan sonar nada antes de un gesto) */
-export function precarga() { for (const k in SONIDOS) if (!cache[k]) { try { const a = new Audio(SONIDOS[k]); a.preload = 'auto'; cache[k] = a } catch (e) { } } }
+export function precarga() {
+  for (const k in SONIDOS) if (!cache[k]) {
+    try { const a = new Audio(SONIDOS[k]); a.preload = 'auto'; cache[k] = a } catch (e) { }
+    /* además se guardan en memoria (los lee el service worker desde su caché si no hay conexión) */
+    fetch(SONIDOS[k]).then(r => r.ok ? r.blob() : null).then(b => { if (b) { const a = new Audio(URL.createObjectURL(b)); a.preload = 'auto'; cache[k] = a } }).catch(() => { });
+  }
+}

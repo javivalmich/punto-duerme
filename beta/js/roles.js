@@ -32,3 +32,14 @@ export const nombreRol = r => (ROLES[r] && ROLES[r].nombre) || '';
 export const sugerirPuntos = n => n <= 5 ? 1 : n <= 8 ? 2 : n <= 11 ? 3 : 4;
 export const maxPuntos = n => Math.max(1, Math.floor((n - 1) / 2));
 export const puntosPara = (n, pedidos) => Math.max(1, Math.min(pedidos || sugerirPuntos(n), maxPuntos(n)));
+
+/* Pasos de la noche en el modo de un solo móvil: el narrador llama a cada personaje por turno, ese coge el móvil, elige y lo deja.
+   `activo:false` = previsto para la fase 2 (el motor de solo.js ya los salta si no están activos; para activarlos basta
+   marcar activo:true y dar su `accion` en solo.js → ACCIONES). Se llama siempre, aunque quien tenga el papel haya muerto
+   (en ese caso se simula la espera), para no delatar nada. `abre`/`cierra` son ids de textos-narrador.js. */
+export const NOCHE = [
+  { rol: 'cupido', orden: 10, soloRonda: 1, activo: false, titulo: 'Turno de Cupido', abre: 'cupido_abre', cierra: 'cupido_cierra', accion: 'enamorar' },
+  { rol: 'vidente', orden: 20, activo: false, titulo: 'Turno de la Vidente', abre: 'vidente_abre', cierra: 'vidente_cierra', accion: 'ver' },
+  { rol: 'punto', orden: 30, activo: true, titulo: 'Turno de los Puntos', abre: 'puntos_abre', cierra: 'puntos_cierra', accion: 'matar' },
+  { rol: 'bruja', orden: 40, activo: false, titulo: 'Turno de la Bruja', abre: 'bruja_abre', cierra: 'bruja_cierra', accion: 'pociones' }
+];

@@ -12,7 +12,7 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 
 1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha y probada por el usuario; ajustes posteriores: narrador = jugador más, botón de portada, estética propia, bots de prueba)**
 2. Bruja, Cupido y Vidente.
-3. Modo de un solo móvil.
+3. ✅ Modo de un solo móvil (adelantada: **hecha, pendiente de prueba del usuario**).
 4. Música y efectos.
 
 ## Reglas del juego
@@ -57,6 +57,7 @@ beta/
   js/red.js                    Supabase: rpc('…') → duerme_…, canal en tiempo real y presencia
   js/sala.js                   portada, crear, unirse, sala de espera y ajustes
   js/pruebas.js                bots y panel de pruebas (solo beta)
+  js/solo.js                   modo de un solo móvil (sin conexión)
   js/partida.js                pantallas de cada fase, director del narrador, temporizadores, menú
   js/roles.js                  catálogo de personajes (presentación) y Puntos sugeridos
   js/narrador.js               voz (speechSynthesis), cola de frases, silenciar
@@ -89,6 +90,15 @@ Identidad propia dentro de Punto Studio: mismas mascota, tipografía (Outfit), e
 - **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (y en `img/logo.svg`).
 - **Logo**: `beta/img/logo.svg` es **provisional**. Para el definitivo: sustituir ese archivo (cuadrado, con su fondo) y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). Mientras tanto los iconos salen del logo provisional.
 - La propuesta de diseño (maqueta) está en `design/propuesta.html` (no se publica).
+
+## Modo de un solo móvil
+
+Elección de modo en la portada, como en Punto Falso: «Crear partida» (cada uno con su móvil, necesita conexión) y «Jugar con un solo móvil» (un móvil que se pasa de mano en mano, sin conexión); cada botón lleva su explicación debajo, y las pantallas de ajustes de ambos modos enlazan con el otro.
+
+- **Sin conexión ni servidor**: todo está en `js/solo.js` y `localStorage` (clave `solo`, caduca a las 5 h; la portada ofrece «Volver a la partida de un solo móvil»). No hay ninguna llamada a Supabase. El service worker precachea la app y los sonidos; los sonidos se guardan además en memoria como blobs (`sonido.js`) y sin conexión el narrador solo usa voces instaladas en el móvil (`narrador.js`).
+- **Flujo**: ajustes (nombres ≥ 4, Puntos, tiempo de debate, revelar papel) → **reparto** (cada uno: «pasa el móvil a X» → «Soy X» → mantiene pulsada su tarjeta → «Ya lo he visto») → **anochece** (todos cierran los ojos) → **noche**: el narrador llama a cada personaje por turno («Los Puntos abren los ojos…»), uno coge el móvil («Tengo el móvil»), elige y confirma, lo deja y «cierran los ojos» → **amanece** (anuncia muertos) → **debate** (cuenta atrás) → **votación** uno a uno y en secreto → **resultado** → noche… → **final** con todos los papeles. Las pantallas privadas vuelven a «pasa el móvil» si se recarga la página.
+- Las reglas de victoria, empate y revelar papel son las mismas que en línea. Los Ciegos no actúan de noche en este modo.
+- **Estructura para la fase 2**: `roles.js → NOCHE` lista los pasos de la noche por orden (cupido 10 solo ronda 1, vidente 20, punto 30, bruja 40), con `activo:false` los de la fase 2; `solo.js → ACCIONES` define qué se elige y qué efecto tiene cada acción (`matar` ya está; faltan `enamorar`, `ver`, `pociones`). Si el personaje ha muerto, se llama igual y se simula la espera (no delata nada). Los textos de llamada de los tres personajes ya están en `textos-narrador.js`.
 
 ## Bots de prueba (solo beta)
 

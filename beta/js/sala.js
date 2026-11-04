@@ -8,6 +8,7 @@ import { desbloquea } from './narrador.js';
 import { precarga } from './sonido.js';
 import { salirSheet } from './partida.js';
 import { renderPruebasSala } from './pruebas.js';
+import { abrirSolo, reanudar, soloGuardado } from './solo.js';
 
 /* ---------- Ajustes de la partida (al crearla y en la sala de espera) ---------- */
 const DEF = { puntos: null, t_noche: 30, t_debate: 180, t_voto: 60, revelar: true };
@@ -49,6 +50,7 @@ function cambioAjuste(e, c, nJug) {
 export function renderInicio() {
   const s = sesionGuardada(), b = $('hVolver');
   b.hidden = !s; if (s) b.textContent = 'Volver a la partida ' + s.codigo;
+  const bs = $('hVolverSolo'); bs.hidden = !soloGuardado(); bs.textContent = 'Volver a la partida de un solo móvil';
 }
 export function irInicio() { renderInicio(); show('s-home') }
 
@@ -135,8 +137,10 @@ export function iniciaSala() {
     const a = e.target.closest('[data-a]'); if (!a) return;
     if (a.dataset.a === 'crear') abrirCrear();
     else if (a.dataset.a === 'unir') abrirUnir();
+    else if (a.dataset.a === 'solo') abrirSolo();
     else if (a.dataset.a === 'inicio') irInicio();
   });
+  $('hVolverSolo').onclick = reanudar;
   $('hVolver').onclick = async () => {
     const s = sesionGuardada(); if (!s) return renderInicio();
     desbloquea(); precarga(); $('hVolver').disabled = true;

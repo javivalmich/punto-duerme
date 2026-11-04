@@ -9,6 +9,7 @@ import { avLoad, iniciaCuentas, ganchos, miLook, miNombre } from './cuenta.js';
 import { iniciaSala, renderSala, irInicio, abrirUnir, renderInicio, limpiaCodigo } from './sala.js';
 import { iniciaPartida, renderJuego, pintaCuentas } from './partida.js';
 import { iniciaPruebas } from './pruebas.js';
+import { iniciaSolo, soloActivo } from './solo.js';
 
 /* Cada vez que llega una vista nueva (o cambia algo local), se pinta la pantalla que toca */
 function render() {
@@ -19,6 +20,7 @@ function render() {
   pidePantallaEncendida();
 }
 E.render = render;
+document.addEventListener('pantalla', () => pidePantallaEncendida());
 E.alSalir = msg => { tema('sala'); soltarPantalla(); irInicio(); if (msg) toast(msg) };
 document.addEventListener('repinta', render);
 
@@ -29,7 +31,7 @@ ganchos.alBorrar = async () => { if (E.ses) { const s = E.ses; olvida(); E.alSal
 /* Pantalla encendida durante la partida (sobre todo para el móvil del narrador) */
 let WL = null;
 async function pidePantallaEncendida() {
-  try { if (E.ses && navigator.wakeLock && !WL && !document.hidden) { WL = await navigator.wakeLock.request('screen'); WL.addEventListener('release', () => { WL = null }) } } catch (e) { }
+  try { if ((E.ses || soloActivo()) && navigator.wakeLock && !WL && !document.hidden) { WL = await navigator.wakeLock.request('screen'); WL.addEventListener('release', () => { WL = null }) } } catch (e) { }
 }
 function soltarPantalla() { try { WL && WL.release() } catch (e) { } WL = null }
 
@@ -37,6 +39,7 @@ function soltarPantalla() { try { WL && WL.release() } catch (e) { } WL = null }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { guardaSesion(); return }
   if (E.ses) { guardaSesion(); revisaCanal(); actualiza(); pidePantallaEncendida() }
+  else if (soloActivo()) pidePantallaEncendida();
   else if (pantalla() === 's-home') renderInicio();
 });
 window.addEventListener('pagehide', guardaSesion);
@@ -44,7 +47,7 @@ setInterval(() => { if (E.ses && !document.hidden) actualiza() }, 15000); /* res
 setInterval(() => { if (E.ses && E.V) pintaCuentas() }, 250);
 
 function arranca() {
-  iniciaSala(); iniciaPartida(); iniciaPruebas(); avLoad(); iniciaCuentas();
+  iniciaSala(); iniciaPartida(); iniciaPruebas(); iniciaSolo(); avLoad(); iniciaCuentas();
   $('overlay').addEventListener('click', e => { if (e.target.id === 'overlay') closeSheet() });
   /* Enlace de sala (?s=CÓDIGO): si ya estoy en esa partida, vuelvo a ella; si no, voy a «Unirme» con el código */
   const c = limpiaCodigo(QS.get('s'));

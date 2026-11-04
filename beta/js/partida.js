@@ -18,7 +18,7 @@ export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'No
 const NARRADAS = ['anochece', 'amanece', 'resultado'];
 
 /* ---------- Lo que dice el narrador en cada fase (también sale como subtítulo en todos los móviles) ---------- */
-const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
+export const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
 const era = (o, sem) => o && o.rol ? ' | ' + texto(o.rol === 'punto' ? 'era_punto' : 'era_ciego', { nombre: nombreDe(o.id) }, sem) : '';
 export function textoFase(V) {
   const s = V.sala, p = s.publico || {}, sem = s.codigo + s.ronda + s.fase;
@@ -78,8 +78,11 @@ const vivos = V => V.jugadores.filter(j => j.vivo);
 
 /* Tarjeta del papel: se mantiene pulsada para verla (como la de Punto Falso) */
 function cartaHTML(V) {
-  const r = V.yo.rol, R = ROLES[r] || {};
-  const comp = V.jugadores.filter(j => j.rol === 'punto' && j.id !== V.yo.id).map(j => j.nombre);
+  return cartaRolHTML(V.yo.rol, V.jugadores.filter(j => j.rol === 'punto' && j.id !== V.yo.id).map(j => j.nombre));
+}
+/* rol y nombres de los compañeros Puntos (también la usa el modo de un solo móvil) */
+export function cartaRolHTML(r, comp) {
+  const R = ROLES[r] || {};
   const extra = r === 'punto' ? `<p class="comp">${comp.length ? 'Tus compañeros: <b>' + esc(listaNombres(comp)) + '</b>' : 'Eres el único Punto.'}</p>` : '';
   return `<div class="card rolcard" id="rolCard" tabindex="0" role="button" aria-label="Mantén pulsado para ver tu papel">
     <div class="front"><img class="mascot" src="img/logo.svg" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
@@ -254,8 +257,8 @@ function menu() {
 }
 function serNarrador() { accion('ser_narrador').then(() => toast('Ahora eres el narrador')).catch(e => toast(textoError(e))) }
 
-const ICO_VOZ = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
-const ICO_MUDO = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+export const ICO_VOZ = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+export const ICO_MUDO = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 
 export function iniciaPartida() {
   $('jMenu').onclick = menu;

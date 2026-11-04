@@ -495,3 +495,10 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 .sel{width:auto;max-width:52%;min-width:0;padding:9px 10px;font-size:.95rem;font-weight:700;background:var(--surface2);color:var(--text);border:2px solid var(--line);border-radius:12px}
 #saPruebas .act{margin-bottom:10px}
 #saBot{margin-top:12px}
+
+/* modos de juego en la portada y modo de un solo móvil */
+.act small{display:block;margin-top:3px;font-size:.78rem;font-weight:600;letter-spacing:0;opacity:.8}
+.link.inline{display:inline;margin:0;padding:0;color:var(--acc);text-decoration:underline;font-weight:700}
+.bigname{font-weight:900;font-size:clamp(2.2rem,11vw,3rem);line-height:1.05;margin:6px 0 10px;overflow-wrap:anywhere}
+#s-solo .phase{margin-top:10px}
+.step output{white-space:nowrap}

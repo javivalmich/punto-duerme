@@ -18,6 +18,7 @@ function puntua(v) {
   if (/m[oó]nica|jorge|marisol|paulina|elvira|alvaro|álvaro|helena|laura|pablo/.test(n)) p += 5;
   if (/compact|eloquence|espeak|novelty|bells|organ|whisper/.test(n)) p -= 30;
   if (v.localService) p += 2;
+  if (!navigator.onLine && !v.localService) return -1; /* sin conexión solo valen las voces instaladas en el móvil */
   return p;
 }
 function eligeVoz() {
@@ -27,6 +28,7 @@ function eligeVoz() {
   for (const v of vs) { const p = puntua(v); if (p > pm) { pm = p; mejor = v } }
   VOZ.voz = pm >= 0 ? mejor : null;
 }
+window.addEventListener('online', () => eligeVoz()); window.addEventListener('offline', () => eligeVoz());
 if (SS) { eligeVoz(); SS.addEventListener && SS.addEventListener('voiceschanged', eligeVoz) }
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
