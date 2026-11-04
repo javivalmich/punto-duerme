@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Punto Duerme (beta)</title>
 <meta name="description" content="Punto Duerme, el juego del pueblo que duerme: cada uno con su móvil y un móvil que hace de narrador con voz. Un juego de Punto Studio.">
-<meta name="theme-color" content="#0b0b0d">
+<meta name="theme-color" content="#0b1030">
 <meta name="robots" content="noindex">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -24,17 +24,18 @@
 <script type="module" src="js/app.js?v=1"></script>
 </head>
 <body>
+<div id="cielo" aria-hidden="true"><div class="estrellas"></div><div class="brillos"></div><div class="niebla"></div><div class="horizonte"></div><div class="disco"></div><div class="luna-cielo"></div></div>
 <div id="betaTag">BETA</div>
 
 <!-- Portada -->
 <section class="screen on" id="s-home">
   <div class="wrap">
     <div class="hero">
-      <img class="logo" src="img/logo.webp" alt="" width="250" height="250">
+      <img class="logo" src="img/logo.svg" alt="" width="250" height="250">
       <h1 class="title">PUNTO DUERME</h1>
       <p class="tag">CAE LA NOCHE · ALGUIEN NO DUERME</p>
     </div>
-    <p class="lead">Cada uno con su móvil. Uno hace de narrador y pone la voz.</p>
+    <p class="lead">Cada uno con su móvil. El móvil del anfitrión hace de narrador y pone la voz.</p>
     <button class="act" id="hVolver" hidden></button>
     <button class="act" data-a="crear">Crear partida</button>
     <button class="act sec" data-a="unir">Unirme</button>
@@ -42,7 +43,7 @@
       <details>
         <summary>Cómo se juega</summary>
         <ol class="steps">
-          <li>Quien crea la partida es el <b>narrador</b>: su móvil pone la voz. Puede jugar también o dejarlo en el centro.</li>
+          <li>Quien crea la partida juega como los demás, y su móvil es el que pone la voz del <b>narrador</b>.</li>
           <li>Cada uno mira en secreto su papel: <b>Punto</b> (los asesinos) o <b>Ciego</b> (el pueblo).</li>
           <li>De noche todos miran su móvil y tocan a alguien: los Puntos eligen a su víctima y los Ciegos marcan de quién sospechan.</li>
           <li>De día, el narrador cuenta quién ha muerto, se debate y se vota a quién echar del pueblo.</li>
@@ -73,7 +74,7 @@
   <div class="wrap">
     <button class="back" data-a="inicio">‹ Volver</button>
     <h2>Unirme</h2>
-    <p class="hint-line">Escribe el código que ves en el móvil del narrador.</p>
+    <p class="hint-line">Escribe el código que ves en el móvil del anfitrión.</p>
     <input class="codein" id="unCod" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCDE" aria-label="Código de la partida">
     <label class="lbl" for="unNom" style="display:block;margin-top:14px">Tu nombre</label>
     <input class="field" id="unNom" maxlength="16" autocomplete="nickname" placeholder="Cómo te verán los demás">

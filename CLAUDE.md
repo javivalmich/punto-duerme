@@ -10,7 +10,7 @@ Juego de Punto Studio del estilo «el pueblo duerme / los hombres lobo». Cada j
 
 Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de seguir.
 
-1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha, pendiente de prueba del usuario)**
+1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha y probada por el usuario; ajustes posteriores: narrador = jugador más, botón de portada, estética propia)**
 2. Bruja, Cupido y Vidente.
 3. Modo de un solo móvil.
 4. Música y efectos.
@@ -22,7 +22,7 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 - **Ciego**: el pueblo.
 - Opcionales (fase 2): Bruja, Cupido, Vidente. Previstos: Guardián, Cazador, Alcalde, Anciano, Niña curiosa (ya están en `roles.js` marcados como `futuro`).
 
-**Partida** (mínimo 4 jugadores; si el narrador no juega, no cuenta)
+**Partida** (mínimo 4 jugadores, contando al anfitrión)
 1. **Reparto**: cada uno mantiene pulsada su tarjeta para ver su papel y pulsa «Ya lo he visto». Los Puntos ven quiénes son sus compañeros. Se pasa a la noche cuando todos están listos (o a los 90 s).
 2. **Anochece** (narrada) → **Noche**: todos miran el móvil y **todos tocan a alguien**, para que nadie se delate. Los Puntos eligen víctima y ven en directo a quién marca cada compañero; los Ciegos marcan de quién sospechan (no tiene efecto, es tapadera) y también pulsan «Confirmar». Los Puntos no pueden marcarse entre ellos.
    - Los Puntos tienen que coincidir todos y pulsar «Confirmar» (basta con que lo pulse uno). **Si solo queda un Punto vivo, confirma directamente.**
@@ -37,11 +37,11 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 **Final**: ganan los Ciegos si no queda ningún Punto; ganan los Puntos si hay tantos Puntos vivos como Ciegos (o más). Se comprueba al salir de «Amanece» y de «Resultado» (y cuando alguien sale de la partida). Pantalla final con el papel de todos; el anfitrión puede volver a la sala con «Otra partida».
 
 **Narrador**
-- Es el móvil del anfitrión. Opción «El narrador también juega»: si juega, lleva el móvil en la mano (arriba la fase, debajo su panel); si no, `body.solo-narra` muestra la fase y la cuenta atrás en grande para dejarlo en el centro.
+- **El narrador es un jugador más**: es el móvil del anfitrión y juega con él en la mano, igual que los demás (no hay opción «yo también juego»; se quitó). Es el único móvil que suena (voz y sonidos), pero su pantalla es la de un jugador normal: ve lo mismo que cualquiera con su papel, ni más ni menos. Lo único propio es el botón de silenciar. La columna `duerme_jugadores.juega` sigue en la base de datos pero siempre es `true`.
 - Voz con `speechSynthesis`, la mejor voz `es-ES` del dispositivo (`narrador.js` puntúa las voces). Botón de silenciar (también silencia los sonidos). iOS solo deja hablar tras un toque: «Crear sala», «Unirme», «Empezar» y «Volver a la partida» llaman a `desbloquea()`.
 - Textos en `beta/js/textos-narrador.js`, con id y variantes. La variante se elige igual en todos los móviles (código + ronda + fase), así el subtítulo que ve cada jugador coincide con la voz.
 - **Nunca dice nada que revele un papel de forma indirecta**: las frases son las mismas pase lo que pase (por ejemplo, «Los Puntos abren los ojos» se dice siempre, y la noche no termina antes por nada que no sea la confirmación de los Puntos o el tiempo).
-- Si el móvil del narrador no está conectado más de 30 s, los demás ven «Ser yo el narrador» (también en el menú ☰).
+- **Relevo**: si el móvil del narrador no está conectado más de 30 s, los demás ven «Ser yo el narrador» (también en el menú ☰); quien lo pulsa pasa a ser el narrador (hace falta un toque para que el navegador deje hablar). Si el narrador sale de la partida, pasa al siguiente por orden de llegada.
 
 **Salir de la partida** (regla de Punto Falso / Punto Ciego): nadie sale por desconectarse o bloquear el móvil. Solo con «Salir», tras 5 h sin abrir el juego (`CINCO_H` en `estado.js`; al detectarlo se llama a `duerme_salir`) o cerrando la app: al volver, la portada muestra «Volver a la partida». Quien sale en plena partida queda fuera (como muerto, sin anuncio) y no puede volver. Si sale el anfitrión o el narrador, pasa al siguiente por orden de llegada.
 
@@ -51,7 +51,7 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 index.html                     portada raíz provisional («Próximamente»)
 beta/
   index.html                   pantallas: portada, crear, unirme, sala de espera, partida, editor de personaje
-  css/estilo.css               diseño de Punto Falso (copiado) + bloque «Punto Duerme» al final
+  css/estilo.css               tokens de tema (noche/alba/día) al principio; base heredada de Punto Falso; bloques «Punto Duerme» al final
   js/app.js                    arranque, reparto de pantallas, pantalla encendida, vuelta a la app
   js/estado.js                 sesión guardada (5 h), vista actual, sincronización con el servidor
   js/red.js                    Supabase: rpc('…') → duerme_…, canal en tiempo real y presencia
@@ -62,6 +62,7 @@ beta/
   js/textos-narrador.js        todas las frases del narrador
   js/sonido.js                 sonidos (solo en el móvil del narrador)
   js/cuenta.js, js/cabeza.js   cuenta opcional y personaje (de Punto Falso; listas de colores = Punto Ciego)
+  img/logo.svg                 logo provisional (el definitivo lo pone el usuario)
   assets/personaje3d.js, .bin  personaje 3D del editor (de Punto Ciego)
   audio/*.wav                  sonidos provisionales (noche, amanecer, muerte, votacion, eliminado, tic, victoria-…)
   vendor/                      supabase-js (UMD) y qrcode
@@ -69,11 +70,24 @@ beta/
   soporte.html, terminos.html  adaptados de Punto Falso; privacidad.html redirige a /privacidad/
 supabase/migrations/           tablas y funciones del juego (aplicadas en el proyecto «Punto ciego», qsmcdfyyxvqmesnbwsod)
 scripts/sonidos-provisionales.mjs   genera los .wav provisionales
+scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/logo.svg
 ```
 
 Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
 
 Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche en las funciones SQL (`duerme_empezar`, `duerme_actuar`, `_duerme_noche_fin`), lo que ve en `duerme_vista`, su pantalla en `partida.js` y sus frases en `textos-narrador.js`.
+
+## Estética
+
+Identidad propia dentro de Punto Studio: mismas mascota, tipografía (Outfit), estructura de pantallas y botones con sombra dura gris, pero paleta nocturna. **No se usa el estilo «expediente» ni la skill punto-studio-design** (descartada para este juego).
+
+- **Noche** (portada, sala, reparto, anochece, noche): azul noche `#0B1030`, cielo índigo `#1A2260`, acento **amarillo luna** `#FFD75E`, coral `#FF7A8C` solo para Puntos/muertes/errores.
+- **Amanecer y día** (amanece, debate, votación, resultado, final): **siempre oscuro y cálido** (se juega con poca luz; nunca fondo claro): morado `#1D1233`/`#5A2A55`, acento melocotón `#FFB46B`, texto `#FFF1E4`, carmesí/rosa `#FF8FA0` para Puntos. Contraste AA comprobado.
+- Los colores son variables en `:root` (`--bg --bg2 --surface --surface2 --line --text --muted --acc --accT --pel --btn --glow`), registradas con `@property` para que se fundan en ~1,6 s. `tema(fase)` (en `util.js`) pone en `<html>` la clase `fase-noche | fase-alba | fase-dia`; se llama desde `renderJuego` y al volver a la sala/portada.
+- Cielo (`#cielo`, fijo detrás de todo): estrellas, brillos que parpadean, niebla que se desplaza, luna (de noche) y sol que sale por el horizonte (alba) y sube un poco (día). Solo CSS y `transform`/`opacity`; respeta `prefers-reduced-motion`.
+- **El amarillo luna** (`--acc` de la noche, al principio de `estilo.css`) debe coincidir con el del logo definitivo: cámbialo ahí (y en `img/logo.svg`).
+- **Logo**: `beta/img/logo.svg` es **provisional**. Para el definitivo: sustituir ese archivo (cuadrado, con su fondo) y ejecutar `npm i --no-save sharp && node scripts/iconos.mjs`, que regenera `beta/icons/*` (favicon, icon-192/512, maskable y apple-touch-icon). Mientras tanto los iconos salen del logo provisional.
+- La propuesta de diseño (maqueta) está en `design/propuesta.html` (no se publica).
 
 ## Sincronización entre móviles
 

@@ -2,7 +2,7 @@
    Estructura: estado.js (sincronización), red.js (Supabase), sala.js (portada, crear, unirse, sala de
    espera), partida.js (la partida), narrador.js + textos-narrador.js (voz), sonido.js, cuenta.js (cuenta
    y personaje), roles.js (personajes). Ver CLAUDE.md. */
-import { $, QS, show, pantalla, toast, closeSheet } from './util.js';
+import { $, QS, show, pantalla, toast, closeSheet, tema } from './util.js';
 import { revisaCanal, rpc } from './red.js';
 import { E, actualiza, accion, guardaSesion, sesionGuardada, olvida } from './estado.js';
 import { avLoad, iniciaCuentas, ganchos, miLook, miNombre } from './cuenta.js';
@@ -13,12 +13,12 @@ import { iniciaPartida, renderJuego, pintaCuentas } from './partida.js';
 function render() {
   if (!E.ses || !E.V) { if (pantalla() === 's-home') renderInicio(); return }
   const fase = E.V.sala.fase;
-  if (fase === 'sala') { if (pantalla() !== 's-sala') { closeSheet(); show('s-sala') } renderSala() }
+  if (fase === 'sala') { tema('sala'); if (pantalla() !== 's-sala') { closeSheet(); show('s-sala') } renderSala() }
   else { if (pantalla() !== 's-juego') { closeSheet(); show('s-juego') } renderJuego() }
   pidePantallaEncendida();
 }
 E.render = render;
-E.alSalir = msg => { document.body.classList.remove('noche', 'solo-narra'); soltarPantalla(); irInicio(); if (msg) toast(msg) };
+E.alSalir = msg => { tema('sala'); soltarPantalla(); irInicio(); if (msg) toast(msg) };
 document.addEventListener('repinta', render);
 
 /* Si el jugador cambia su personaje o su nombre con la cuenta, se avisa a la sala */

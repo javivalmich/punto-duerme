@@ -4,7 +4,7 @@
    - El móvil narrador habla al empezar cada fase y cierra las fases narradas al terminar de hablar.
    - Cualquier móvil pide pasar de fase cuando se acaba el tiempo (el narrador primero; los demás,
      unos segundos después, por si el narrador no está). El servidor ignora las peticiones repetidas. */
-import { $, esc, sheet, closeSheet, toast, listaNombres } from './util.js';
+import { $, esc, sheet, closeSheet, toast, listaNombres, tema } from './util.js';
 import { textoError, rpc } from './red.js';
 import { E, ahora, jug, nombreDe, soyAnfitrion, soyNarrador, conectado, accion, olvida } from './estado.js';
 import { avImg } from './cuenta.js';
@@ -15,7 +15,6 @@ import { suena } from './sonido.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
 const NARRADAS = ['anochece', 'amanece', 'resultado'];
-const NOCTURNAS = ['anochece', 'noche'];
 
 /* ---------- Lo que dice el narrador en cada fase (también sale como subtítulo en todos los móviles) ---------- */
 const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
@@ -45,8 +44,7 @@ function pinta(id, html) { const el = $(id); if (el._h !== html) { el._h = html;
 let FIJO_K = '';
 export function renderJuego() {
   const V = E.V, s = V.sala, me = V.yo;
-  document.body.classList.toggle('noche', NOCTURNAS.includes(s.fase));
-  document.body.classList.toggle('solo-narra', !me.juega);
+  tema(s.fase);
   $('jFase').textContent = FASES[s.fase] || '';
   const mudo = $('jMudo'); mudo.hidden = !soyNarrador();
   mudo.innerHTML = VOZ.mudo ? ICO_MUDO : ICO_VOZ; mudo.setAttribute('aria-label', VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador');
@@ -69,13 +67,13 @@ function renderAviso() {
   if (E.presT && !conectado(n)) { if (!AUS.desde) AUS.desde = Date.now() } else AUS.desde = 0;
   if (AUS.desde && Date.now() - AUS.desde > 30000 && s.fase !== 'final')
     h += `<div class="aviso">El móvil del narrador (${esc(nombreDe(n))}) no está conectado. <button class="act sec" data-a="sernarr">Ser yo el narrador</button></div>`;
-  if (me.juega && !me.vivo && s.fase !== 'final') h += `<div class="elimban">ESTÁS FUERA<small>Sigue la partida en silencio: ya no votas ni actúas.</small></div>`;
+  if (!me.vivo && s.fase !== 'final') h += `<div class="elimban">ESTÁS FUERA<small>Sigue la partida en silencio: ya no votas ni actúas.</small></div>`;
   pinta('jAviso', h);
 }
 
 const fila = (j, extra = '') => `<div class="pl${j.vivo ? '' : ' dead'}">${avImg(j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${extra}</span></div>`;
-const listaJug = (V, f) => `<div class="plist">${V.jugadores.filter(j => j.juega && (f ? f(j) : true)).map(j => fila(j, j.fuera ? '<span class="tg">ha salido</span>' : '')).join('')}</div>`;
-const vivos = V => V.jugadores.filter(j => j.juega && j.vivo);
+const listaJug = (V, f) => `<div class="plist">${V.jugadores.filter(j => f ? f(j) : true).map(j => fila(j, j.fuera ? '<span class="tg">ha salido</span>' : '')).join('')}</div>`;
+const vivos = V => V.jugadores.filter(j => j.vivo);
 
 /* Tarjeta del papel: se mantiene pulsada para verla (como la de Punto Falso) */
 function cartaHTML(V) {
@@ -83,7 +81,7 @@ function cartaHTML(V) {
   const comp = V.jugadores.filter(j => j.rol === 'punto' && j.id !== V.yo.id).map(j => j.nombre);
   const extra = r === 'punto' ? `<p class="comp">${comp.length ? 'Tus compañeros: <b>' + esc(listaNombres(comp)) + '</b>' : 'Eres el único Punto.'}</p>` : '';
   return `<div class="card rolcard" id="rolCard" tabindex="0" role="button" aria-label="Mantén pulsado para ver tu papel">
-    <div class="front"><img class="mascot" src="img/logo.webp" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
+    <div class="front"><img class="mascot" src="img/logo.svg" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
     <div class="back"><p class="k">Eres</p><p class="rolnom ${r}">${esc((R.nombre || '').toUpperCase())}</p><p class="rcorto">${esc(R.corto || '')}</p><p class="rtexto">${esc(R.texto || '')}</p>${extra}</div>
   </div>`;
 }
@@ -91,18 +89,17 @@ function cartaHTML(V) {
 const CUERPO = {
   reparto(V) {
     const me = V.yo, vs = vivos(V), listos = vs.filter(j => j.listo).length, mio = jug(me.id);
-    if (!me.juega) return { fijo: `<div class="phase"><p class="pt">Repartiendo los papeles</p><p>Cada jugador está mirando su papel en secreto.</p></div>`, vivo: `<p class="vprog">Listos <b>${listos}/${vs.length}</b></p>` };
     return {
       fijo: cartaHTML(V),
       vivo: (mio && mio.listo ? `<p class="espera">Esperando a los demás…</p>` : `<button class="act" data-a="listo">Ya lo he visto</button>`) + `<p class="vprog">Listos <b>${listos}/${vs.length}</b></p>`
     };
   },
   anochece(V) {
-    return { fijo: `<div class="luna" aria-hidden="true"></div><div class="phase"><p class="pt">El pueblo se duerme</p><p>Escucha al narrador y prepárate para mirar tu móvil.</p></div>`, vivo: '' };
+    return { fijo: `<div class="phase"><p class="pt">El pueblo se duerme</p><p>Escucha al narrador y prepárate para mirar tu móvil.</p></div>`, vivo: '' };
   },
   noche(V) {
-    const me = V.yo, actua = me.juega && me.vivo, punto = me.rol === 'punto';
-    if (!actua) return { fijo: `<div class="luna" aria-hidden="true"></div><div class="phase"><p class="pt">Es de noche</p><p>${me.juega ? 'Estás fuera: mira en silencio.' : 'Los jugadores están eligiendo en su móvil.'}</p></div>`, vivo: '' };
+    const me = V.yo, actua = me.vivo, punto = me.rol === 'punto';
+    if (!actua) return { fijo: `<div class="phase"><p class="pt">Es de noche</p><p>Estás fuera: mira en silencio.</p></div>`, vivo: '' };
     const vp = V.jugadores.filter(j => j.rol === 'punto' && j.vivo);
     const fijo = `<div class="phase"><p class="pt">Elige a un jugador</p><p class="hintrol">${punto ? (vp.length > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.') : 'Marca de quién sospechas.'}</p></div>`;
     const marcas = V.marcas || {}, mia = V.mio.marca, conf = 'confirma' in V.mio;
@@ -133,7 +130,7 @@ const CUERPO = {
     };
   },
   votacion(V) {
-    const me = V.yo, actua = me.juega && me.vivo, vs = vivos(V), mio = V.mio.voto;
+    const me = V.yo, actua = me.vivo, vs = vivos(V), mio = V.mio.voto;
     const prog = `<div class="vprog">Han votado <b>${V.votos || 0}/${vs.length}</b><span class="bar"><i style="width:${vs.length ? Math.round(100 * (V.votos || 0) / vs.length) : 0}%"></i></span></div>`;
     if (!actua) return { fijo: `<div class="phase"><p class="pt">Votación</p><p>Los jugadores vivos están votando en su móvil.</p></div>`, vivo: prog };
     const lista = vs.filter(j => j.id !== me.id).map(j => `<button class="vbtn${mio === j.id ? ' on' : ''}" data-voto="${j.id}">${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span><span class="chk">✓</span></button>`).join('');
@@ -152,10 +149,10 @@ const CUERPO = {
   },
   final(V) {
     const g = (V.sala.publico || {}).ganador, host = soyAnfitrion();
-    const rows = V.jugadores.filter(j => j.juega).map(j => fila(j, `<span class="tg ${j.rol === 'punto' ? 'rojo' : ''}">${esc(nombreRol(j.rol))}</span>${j.fuera ? '<span class="tg">ha salido</span>' : ''}`)).join('');
+    const rows = V.jugadores.map(j => fila(j, `<span class="tg ${j.rol === 'punto' ? 'rojo' : ''}">${esc(nombreRol(j.rol))}</span>${j.fuera ? '<span class="tg">ha salido</span>' : ''}`)).join('');
     const mio = V.yo.rol && ((g === 'puntos') === (V.yo.rol === 'punto'));
     return {
-      fijo: `<div class="ganan ${g}"><p class="k">${V.yo.juega ? (mio ? 'Has ganado' : 'Has perdido') : 'Fin de la partida'}</p><p class="big">GANAN LOS ${g === 'puntos' ? 'PUNTOS' : 'CIEGOS'}</p></div>`,
+      fijo: `<div class="ganan ${g}"><p class="k">${mio ? 'Has ganado' : 'Has perdido'}</p><p class="big">GANAN LOS ${g === 'puntos' ? 'PUNTOS' : 'CIEGOS'}</p></div>`,
       vivo: `<div class="panel"><div class="plist">${rows}</div></div>` + (host ? `<button class="act" data-a="otra">Otra partida</button>` : '<p class="hostnote">El anfitrión puede empezar otra partida.</p>') + `<button class="act sec" data-a="salir">Salir</button>`
     };
   }
@@ -235,7 +232,7 @@ function menu() {
   const V = E.V; if (!V) return;
   const s = V.sala, me = V.yo, enJuego = !['sala', 'final'].includes(s.fase);
   sheet(`<div class="menuhead"><h3>Partida ${esc(s.codigo)}</h3><button class="xbtn" id="mnX" aria-label="Cerrar">✕</button></div>
-    ${me.juega && me.rol && enJuego ? '<button class="menuitem" id="mnRol">Ver mi papel</button>' : ''}
+    ${me.rol && enJuego ? '<button class="menuitem" id="mnRol">Ver mi papel</button>' : ''}
     ${soyNarrador() ? `<button class="menuitem" id="mnMudo">${VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador'}</button>` : '<button class="menuitem" id="mnNarr">Ser yo el narrador</button>'}
     <button class="menuitem" id="mnComo">Cómo se juega</button>
     <div class="menusep">${soyAnfitrion() && enJuego ? '<button class="menuitem danger" id="mnFin">Terminar la partida</button>' : ''}<button class="menuitem exit" id="mnSalir">Salir de la partida</button></div>`, () => {

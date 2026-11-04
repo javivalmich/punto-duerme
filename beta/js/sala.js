@@ -9,7 +9,7 @@ import { precarga } from './sonido.js';
 import { salirSheet } from './partida.js';
 
 /* ---------- Ajustes de la partida (al crearla y en la sala de espera) ---------- */
-const DEF = { puntos: null, t_noche: 30, t_debate: 180, t_voto: 60, revelar: true, anf_juega: true };
+const DEF = { puntos: null, t_noche: 30, t_debate: 180, t_voto: 60, revelar: true };
 const PASOS = { t_noche: [10, 180, 5], t_debate: [30, 900, 30], t_voto: [15, 300, 15] };
 export const fmtSeg = s => s < 60 ? s + ' s' : Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' min';
 
@@ -26,7 +26,6 @@ function ajustesHTML(c, editable, nJug) {
       ? `<div class="step"><button type="button" data-pts="-1" aria-label="Menos Puntos" ${k <= 1 ? 'disabled' : ''}>−</button><output>${k}</output><button type="button" data-pts="1" aria-label="Más Puntos" ${k >= maxPuntos(nJug) ? 'disabled' : ''}>+</button></div>`
       : `<b class="val">${k}</b>`}</div>`;
   }
-  h += sw('anf_juega', 'El narrador también juega', 'Si no, su móvil solo pone la voz y se deja en el centro');
   h += fila('t_noche', 'Noche', 'Tiempo para elegir');
   h += fila('t_debate', 'Debate', 'Tiempo para hablar de día');
   h += fila('t_voto', 'Votación', 'Tiempo para votar');
@@ -101,8 +100,8 @@ export function renderSala() {
   if (qr.dataset.c !== s.codigo && window.qrcode) {
     try { const q = window.qrcode(0, 'M'); q.addData(enlace(s.codigo)); q.make(); qr.innerHTML = q.createSvgTag({ cellSize: 6, margin: 2, scalable: true }); qr.dataset.c = s.codigo } catch (e) { }
   }
-  const js = V.jugadores.filter(j => !j.fuera), jugadores = js.filter(j => j.juega).length;
-  const lista = js.map((j, i) => `<div class="pl"><span class="num">${i + 1}</span>${avImg(j.id === V.yo.id ? (miLook() || j.look) : j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${j.id === s.anfitrion ? '<span class="tg">anfitrión</span>' : ''}${!j.juega ? '<span class="tg">solo narra</span>' : ''}${j.id === V.yo.id ? '<span class="tg">tú</span>' : ''}</span><span class="dot${conectado(j.id) ? '' : ' off'}" title="${conectado(j.id) ? 'Conectado' : 'Sin conexión'}"></span>${host && j.id !== V.yo.id ? `<button class="kick" data-kick="${j.id}" aria-label="Sacar a ${esc(j.nombre)}">✕</button>` : ''}</div>`).join('');
+  const js = V.jugadores.filter(j => !j.fuera), jugadores = js.length;
+  const lista = js.map((j, i) => `<div class="pl"><span class="num">${i + 1}</span>${avImg(j.id === V.yo.id ? (miLook() || j.look) : j.look, 'sm')}<span class="nm2"><b>${esc(j.nombre)}</b>${j.id === s.anfitrion ? '<span class="tg">anfitrión</span>' : ''}${j.id === V.yo.id ? '<span class="tg">tú</span>' : ''}</span><span class="dot${conectado(j.id) ? '' : ' off'}" title="${conectado(j.id) ? 'Conectado' : 'Sin conexión'}"></span>${host && j.id !== V.yo.id ? `<button class="kick" data-kick="${j.id}" aria-label="Sacar a ${esc(j.nombre)}">✕</button>` : ''}</div>`).join('');
   pinta('saLista', lista);
   pinta('saAjustes', ajustesHTML(s.config, host, jugadores));
   $('saEmpezar').hidden = !host;
@@ -149,7 +148,7 @@ export function iniciaSala() {
   $('unCod').addEventListener('input', () => { const el = $('unCod'); el.value = el.value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 5) });
   $('saAjustes').addEventListener('click', e => {
     if (!E.V || !soyAnfitrion()) return;
-    const n = E.V.jugadores.filter(j => !j.fuera && j.juega).length;
+    const n = E.V.jugadores.filter(j => !j.fuera).length;
     const c = cambioAjuste(e, E.V.sala.config, n); if (!c) return;
     E.V.sala.config = { ...E.V.sala.config, ...c }; renderSala(); /* se ve al momento; el servidor lo confirma */
     accion('configurar', { p_config: c }).catch(err => toast(textoError(err)));

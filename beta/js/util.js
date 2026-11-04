@@ -42,3 +42,10 @@ document.addEventListener('pointerdown', e => {
   b.classList.add('prs'); const fuera = () => { b.classList.remove('prs'); window.removeEventListener('pointerup', fuera); window.removeEventListener('pointercancel', fuera) };
   window.addEventListener('pointerup', fuera); window.addEventListener('pointercancel', fuera);
 });
+
+/* Tema de la interfaz según la fase: noche (azul), alba (amanecer) o día (debate y votación). Se funde con CSS. */
+const TEMA = { amanece: 'alba', debate: 'dia', votacion: 'dia', resultado: 'dia', final: 'dia' };
+export function tema(fase) {
+  const t = 'fase-' + (TEMA[fase] || 'noche'), r = document.documentElement;
+  if (!r.classList.contains(t)) { r.classList.remove('fase-noche', 'fase-alba', 'fase-dia'); r.classList.add(t) }
+}

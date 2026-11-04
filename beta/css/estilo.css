@@ -1,25 +1,41 @@
 /* Punto Duerme · estilos. Base: el diseño de Punto Falso (mismos tokens y componentes); al final, lo propio de este juego. */
 @font-face{font-family:'Outfit';font-style:normal;font-weight:400 900;font-display:swap;src:url(../fonts/outfit-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+/* ---- Tema ----
+   Noche (por defecto): azul noche + amarillo luna. Amanecer/día: morado oscuro cálido con ámbar y melocotón.
+   Nunca se pasa a fondo claro (se juega con poca luz). El cliente pone en <html> la clase fase-noche | fase-alba | fase-dia
+   y los colores se funden (≈1,6 s) gracias a @property.
+   EL AMARILLO LUNA ES --acc de la noche: cámbialo solo aquí (y el mismo valor en img/logo.svg). */
+@property --bg{syntax:'<color>';inherits:true;initial-value:#0b1030}
+@property --bg2{syntax:'<color>';inherits:true;initial-value:#1a2260}
+@property --surface{syntax:'<color>';inherits:true;initial-value:#141b45}
+@property --surface2{syntax:'<color>';inherits:true;initial-value:#1e2760}
+@property --line{syntax:'<color>';inherits:true;initial-value:#2b3470}
+@property --text{syntax:'<color>';inherits:true;initial-value:#eef0ff}
+@property --muted{syntax:'<color>';inherits:true;initial-value:#a4acdc}
+@property --acc{syntax:'<color>';inherits:true;initial-value:#ffd75e}
+@property --accT{syntax:'<color>';inherits:true;initial-value:#1b1740}
+@property --pel{syntax:'<color>';inherits:true;initial-value:#ff7a8c}
+@property --btn{syntax:'<color>';inherits:true;initial-value:#4b5173}
+@property --glow{syntax:'<color>';inherits:true;initial-value:#6e82ff}
 :root{
-  --bg:#f3f3f5; --glow:rgba(224,18,15,.10); --surface:#ffffff; --surface2:#e8e8ee; --line:rgba(14,14,17,.12);
-  --text:#0e0e11; --muted:#5f5f69; --red:#e0120f; --red-d:#8f0a08; --red-press:#a00907; /* su rojo base oscurecido con el mismo contraste que en Punto Ciego (#ff4637 → #c4281c: 1,69:1) */ --visor:#0e0e11;
-  color-scheme:light; box-sizing:border-box;
+  --bg:#0b1030; --bg2:#1a2260; --surface:#141b45; --surface2:#1e2760; --line:rgba(160,175,255,.2);
+  --text:#eef0ff; --muted:#a4acdc; --acc:#ffd75e; --accT:#1b1740; --pel:#ff7a8c; --btn:#4b5173; --glow:rgba(110,130,255,.3);
+  --red:var(--acc); --red-d:color-mix(in srgb,var(--acc) 60%,#000); --red-press:color-mix(in srgb,var(--acc) 84%,#000); --visor:#0e0e11;
+  --estrellas:1; --niebla:1; --sol-y:120%; --sol-o:0; --luna-o:1;
+  color-scheme:dark; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  transition:--bg 1.6s ease,--bg2 1.6s ease,--surface 1.6s ease,--surface2 1.6s ease,--line 1.6s ease,--text 1.6s ease,--muted 1.6s ease,--acc 1.6s ease,--accT 1.6s ease,--pel 1.6s ease,--btn 1.6s ease,--glow 1.6s ease;
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0b0b0d; --glow:rgba(224,18,15,.22); --surface:#17171c; --surface2:#24242b; --line:rgba(255,255,255,.1);
-    --text:#f5f5f7; --muted:#9d9daa; color-scheme:dark;
-  }
+:root.fase-alba,:root.fase-dia{
+  --bg:#1d1233; --bg2:#5a2a55; --surface:#2a1a45; --surface2:#3a2457; --line:rgba(255,200,170,.2);
+  --text:#fff1e4; --muted:#d9bfd6; --acc:#ffb46b; --accT:#2a1233; --pel:#ff8fa0; --btn:#5b4468; --glow:rgba(255,150,90,.42);
+  --estrellas:.12; --niebla:.5; --sol-y:34%; --sol-o:.95; --luna-o:0;
 }
-:root[data-theme="dark"]{
-  --bg:#0b0b0d; --glow:rgba(224,18,15,.22); --surface:#17171c; --surface2:#24242b; --line:rgba(255,255,255,.1);
-  --text:#f5f5f7; --muted:#9d9daa; color-scheme:dark;
-}
+:root.fase-dia{--sol-y:8%; --glow:rgba(255,170,100,.34)}
 *,*::before,*::after{box-sizing:border-box}
 html{height:100%;overscroll-behavior-y:none;background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;min-height:100%;color:var(--text);font:16px/1.5 Outfit,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  background:radial-gradient(ellipse at 50% -10%,var(--glow) 0,transparent 60%),var(--bg);-webkit-tap-highlight-color:transparent}
+  background:var(--bg);-webkit-tap-highlight-color:transparent}
 body.red{--text:#fff;--muted:rgba(255,255,255,.8);--line:rgba(255,255,255,.3);--surface2:rgba(0,0,0,.25);
   background:radial-gradient(circle at 50% 35%,#ff2a24 0,var(--red) 38%,var(--red-d) 100%)}
 .wrap{max-width:460px;margin:0 auto;padding:18px 18px 30px}
@@ -56,7 +72,7 @@ body.red .act.sec{background:transparent;border-color:rgba(255,255,255,.55)}
 
 /* portada */
 .hero{text-align:center;padding-top:6px}
-.logo{width:min(62vw,250px);aspect-ratio:1;border-radius:28%;background:#0c0c0c;display:block;margin:4px auto 10px;filter:drop-shadow(0 12px 30px rgba(224,18,15,.35))}
+.logo{width:min(62vw,250px,30dvh);aspect-ratio:1;border-radius:28%;background:#0c0c0c;display:block;margin:4px auto 10px;filter:drop-shadow(0 12px 30px rgba(224,18,15,.35))}
 .title{font-weight:900;font-size:clamp(2.5rem,12vw,3.3rem);line-height:1;letter-spacing:.06em}
 .tag{color:var(--red);font-weight:600;letter-spacing:.04em;font-size:clamp(.68rem,3.6vw,.82rem);margin-top:8px;white-space:nowrap}
 .lead{color:var(--muted);text-align:center;margin:18px auto 8px;max-width:30ch;font-size:1.05rem}
@@ -306,6 +322,7 @@ body.red .sheet .act{background:var(--red)}
 #editor{position:fixed;inset:0;z-index:64;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:radial-gradient(ellipse at 50% -10%,var(--glow) 0,transparent 60%),var(--bg);color:var(--text);
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 #editor[hidden]{display:none}
+[hidden]{display:none!important}
 body.ed-on{overflow:hidden}
 .ed-in{max-width:460px;margin:0 auto;padding:12px 18px 34px}
 .ed-sub{color:var(--muted);margin:2px 0 6px;line-height:1.45}
@@ -374,7 +391,6 @@ p.vprog b{color:var(--text)}
 .sheet .rolcard{height:min(46vh,360px);margin-bottom:6px}
 
 /* noche y día */
-body.noche{--bg:#050508;--glow:rgba(70,90,160,.18)}
 .luna,.sol{width:84px;height:84px;border-radius:50%;margin:8px auto 14px}
 .luna{background:radial-gradient(circle at 34% 34%,#f2efe8 0,#d9d4c6 60%,#a9a395 100%);box-shadow:inset -18px -8px 0 0 rgba(0,0,0,.35)}
 .sol{background:radial-gradient(circle,#ffd27a 0,#ff9a3c 70%);box-shadow:0 0 40px rgba(255,170,60,.35)}
@@ -395,10 +411,79 @@ body.noche{--bg:#050508;--glow:rgba(70,90,160,.18)}
 .ganan .k{font-weight:700;letter-spacing:.14em;font-size:.85rem;text-transform:uppercase;opacity:.85}
 .ganan .big{font-weight:900;font-size:clamp(2rem,10vw,2.8rem);line-height:1.02;letter-spacing:.03em;margin-top:4px}
 
-/* el narrador que no juega: pantalla grande para dejar en el centro */
-body.solo-narra .fasenom{font-size:2rem}
-body.solo-narra .cuenta{display:block;font-size:clamp(4rem,24vw,7rem);line-height:1;color:var(--text);text-align:center;margin:0}
-body.solo-narra .gtop{flex-wrap:wrap}
-body.solo-narra .gtop .who{flex-direction:column;align-items:flex-start;gap:0;flex:1}
-body.solo-narra .narra{font-size:1.25rem}
-body.solo-narra .phase .pt{font-size:2rem}
+
+/* ==================== Tema Punto Duerme: cielo y componentes ==================== */
+#cielo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background:radial-gradient(ellipse at 50% -10%,var(--glow) 0,transparent 62%),linear-gradient(180deg,var(--bg2) 0,var(--bg) 60%)}
+#cielo>*{position:absolute}
+#cielo .estrellas{inset:0;opacity:var(--estrellas);transition:opacity 1.6s;
+  background-image:radial-gradient(1.5px 1.5px at 12% 9%,#fff,transparent),radial-gradient(1px 1px at 28% 22%,#dfe4ff,transparent),radial-gradient(1.5px 1.5px at 47% 6%,#fff,transparent),radial-gradient(1px 1px at 63% 17%,#fff,transparent),radial-gradient(2px 2px at 82% 8%,#ffe9a0,transparent),radial-gradient(1px 1px at 91% 26%,#dfe4ff,transparent),radial-gradient(1px 1px at 7% 36%,#fff,transparent),radial-gradient(1.5px 1.5px at 74% 40%,#fff,transparent),radial-gradient(1px 1px at 36% 47%,#dfe4ff,transparent),radial-gradient(1px 1px at 55% 33%,#fff,transparent),radial-gradient(1px 1px at 20% 62%,#dfe4ff,transparent),radial-gradient(1.5px 1.5px at 88% 58%,#fff,transparent),radial-gradient(1px 1px at 44% 74%,#fff,transparent),radial-gradient(1px 1px at 68% 84%,#dfe4ff,transparent),radial-gradient(1px 1px at 10% 88%,#fff,transparent)}
+#cielo .brillos{inset:0;opacity:calc(var(--estrellas) * .9);transition:opacity 1.6s;
+  background-image:radial-gradient(2px 2px at 22% 14%,#fff,transparent),radial-gradient(2px 2px at 71% 28%,#fff,transparent),radial-gradient(2px 2px at 40% 52%,#ffe9a0,transparent),radial-gradient(2px 2px at 85% 70%,#fff,transparent)}
+#cielo .niebla{left:-25%;right:-25%;bottom:-8%;height:46%;opacity:var(--niebla);transition:opacity 1.6s;filter:blur(12px);
+  background:radial-gradient(ellipse at 30% 70%,rgba(150,165,255,.2),transparent 60%),radial-gradient(ellipse at 78% 80%,rgba(150,165,255,.15),transparent 55%)}
+#cielo .horizonte{left:0;right:0;bottom:0;height:55%;opacity:var(--sol-o);transition:opacity 1.6s;
+  background:radial-gradient(ellipse 80% 100% at 50% 100%,rgba(255,140,90,.5) 0,rgba(255,110,110,.2) 45%,transparent 75%)}
+#cielo .disco{left:50%;bottom:0;width:120px;height:120px;margin-left:-60px;border-radius:50%;opacity:calc(var(--sol-o) * .4);filter:blur(1px);
+  background:radial-gradient(circle,#ffe2b0 0,#ffb46b 60%,#ff8a5c 100%);box-shadow:0 0 60px 20px rgba(255,160,90,.45);
+  transform:translateY(var(--sol-y));transition:transform 2.6s ease,opacity 1.6s}
+@media (prefers-reduced-motion:no-preference){
+  #cielo .brillos{animation:brillo 5s ease-in-out infinite alternate}
+  #cielo .niebla{animation:niebla 46s ease-in-out infinite alternate}
+  @keyframes brillo{from{filter:brightness(1)}to{filter:brightness(.35)}}
+  @keyframes niebla{from{transform:translateX(-4%)}to{transform:translateX(4%)}}
+}
+.screen,#editor{position:relative;z-index:1}
+
+/* botones: relleno de acento, sombra dura gris, se hunden al pulsar */
+.act{background:var(--acc);color:var(--accT);box-shadow:0 5px 0 var(--btn)}
+.act.sec{background:transparent;color:var(--text);border:2px solid var(--line);box-shadow:0 5px 0 var(--btn)}
+.act.danger{background:transparent;color:var(--pel);border:2px solid var(--pel);box-shadow:0 5px 0 var(--btn)}
+.act.google,.act.apple{box-shadow:0 5px 0 var(--btn)}
+.act:is(.prs,:active):not(:disabled){transform:translateY(5px);box-shadow:0 0 0 var(--btn)}
+.act:disabled{opacity:.5;box-shadow:none}
+button:focus-visible,input:focus-visible,summary:focus-visible,.card:focus-visible{outline:3px solid var(--acc)}
+.logo{background:none;filter:drop-shadow(0 10px 26px color-mix(in srgb,var(--acc) 30%,transparent))}
+.tag{color:var(--acc)}
+.code{color:var(--acc)}
+.err,.sheet .err{color:var(--pel)}
+.sheet .fine a{color:var(--acc)}
+ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
+.switch[aria-checked="true"]{background:var(--acc)}
+.switch[aria-checked="true"]::after{background:var(--accT)}
+.sw.on{box-shadow:0 0 0 3px var(--surface),0 0 0 5px var(--acc)}
+.menuitem.danger,.menuitem.exit{color:var(--pel);border-color:var(--pel)}
+#betaTag{background:var(--acc);color:var(--accT)}
+.cuenta{color:var(--acc)}
+.cuenta.poco{color:var(--pel)}
+.narra{border-left-color:var(--acc)}
+.aviso{border-color:var(--acc)}
+.elimban{background:var(--surface);color:var(--text);border-color:var(--pel)}
+.vbtn.on{border-color:var(--acc);background:var(--acc);color:var(--accT)}
+.vbtn.on .av{border-color:var(--accT)}
+.vbtn .tg.marca{background:var(--acc);color:var(--accT)}
+.vbtn.on .tg.marca{background:var(--accT);color:var(--acc)}
+.tg.rojo{background:var(--pel)!important;color:#1b0710!important}
+.vprog .bar i,.recuento .b i{background:var(--acc)}
+.muerto .av.xl{border-color:var(--pel)}
+
+#cielo .luna-cielo{top:calc(78px + env(safe-area-inset-top,0px));right:16px;width:34px;height:34px;border-radius:50%;opacity:var(--luna-o);transition:opacity 1.6s;box-shadow:inset -9px -4px 0 0 var(--acc);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--acc) 45%,transparent))}
+
+/* astros en el contenido */
+.luna{background:transparent;box-shadow:inset -18px -8px 0 0 var(--acc);filter:drop-shadow(0 0 16px color-mix(in srgb,var(--acc) 45%,transparent))}
+.sol{width:84px;height:84px;font-size:0;background:radial-gradient(circle,#ffe2b0 0,var(--acc) 70%);box-shadow:0 0 40px rgba(255,160,90,.55)}
+
+/* tarjeta del papel y pantalla final */
+.rolcard.open{background:#0a0d26;border-color:var(--acc);color:var(--text)}
+.rolcard.open:has(.rolnom.punto){background:#3a0f22;border-color:var(--pel)}
+.rolcard .front .mascot{mix-blend-mode:normal;border-radius:22%}
+.rolnom{color:var(--text)}
+.rolnom.punto{color:var(--pel)}
+.rolcard .back,.comp{color:var(--text)}
+.rtexto{color:var(--muted)}
+.ganan{border-color:var(--acc)}
+.ganan.puntos{background:radial-gradient(circle at 50% 30%,#8a2447 0,#4a1230 55%,#2a0a1c 100%);color:#ffe8ee;border-color:var(--pel)}
+#cielo .disco{opacity:calc(var(--sol-o) * .3)}
+.act.sec{background:color-mix(in srgb,var(--bg) 72%,transparent)}
+.sheet{max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
+.wrap{padding-top:36px}
