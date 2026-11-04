@@ -1,4 +1,4 @@
-/* Todo el sonido de la app (voz del narrador y efectos) pasa por Web Audio (AudioContext), nunca por elementos <audio>/<video>:
+/* Todo el sonido de la app (la voz grabada del narrador; no hay efectos) pasa por Web Audio (AudioContext), nunca por elementos <audio>/<video>:
    iOS trata un <audio> como «música» y deja el reproductor «Punto Duerme» en la pantalla de bloqueo (con play, ±10 s…).
    Con Web Audio no aparece. Además se limpia navigator.mediaSession y se para y libera todo al salir de la partida,
    al ocultarse/cerrarse la página (pagehide) y al terminar cada clip.
@@ -20,8 +20,11 @@ export function limpiaMediaSession() {
 }
 
 /* Hay que llamarlo desde un toque del usuario (iOS no deja sonar antes): crea o reanuda el contexto y emite un instante de silencio */
+/* iOS: con «playback» el audio de Web Audio suena aunque el móvil esté en modo silencio (la voz del navegador, no: no tiene arreglo) */
+function tipoSesion(t) { try { if (navigator.audioSession) navigator.audioSession.type = t } catch (e) { } }
+
 export function desbloquea() {
-  limpiaMediaSession();
+  limpiaMediaSession(); tipoSesion('playback');
   if (!Ctor) return;
   try {
     if (!CTX || CTX.state === 'closed') CTX = new Ctor();
@@ -68,7 +71,7 @@ export function liberaAudio() {
   paraTodo(); DECOD.clear();
   const c = CTX; CTX = null;
   if (c && c.state !== 'closed') { try { c.close().catch(() => { }) } catch (e) { } }
-  limpiaMediaSession();
+  limpiaMediaSession(); tipoSesion('auto');
 }
 
 /* Al ocultar la página (bloqueo, cambio de app) se para y suspende; al volver, reanuda en el siguiente toque */

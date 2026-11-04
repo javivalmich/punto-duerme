@@ -522,3 +522,4 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 .suspense{font-weight:900;font-size:4rem;line-height:1;color:var(--muted);letter-spacing:.2em;animation:pulso 1.2s ease-in-out infinite alternate}
 @keyframes pulso{from{opacity:.3}to{opacity:1}}
 html.fase-oscura #jAviso .pruebas{display:none}
+.silencio{text-align:center;color:var(--muted);font-size:.85rem;margin:8px 0 0}

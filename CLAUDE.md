@@ -13,7 +13,7 @@ Se hace **una fase cada vez** y se espera a que el usuario la pruebe antes de se
 1. ✅ Modo «cada uno con su móvil», solo Punto y Ciego: sala, noche, día, votación, final y narrador con voz. **(hecha y probada por el usuario; ajustes posteriores: narrador = jugador más, botón de portada, estética propia, bots de prueba)**
 2. Bruja, Cupido y Vidente.
 3. ✅ Modo de un solo móvil (adelantada: **hecha, pendiente de prueba del usuario**).
-4. Música y efectos.
+4. Música de ambiente (hueco preparado en `js/ambiente.js`, desactivado; **no hay pitidos ni efectos de sonido, solo la voz del narrador**).
 
 ## Reglas del juego
 
@@ -64,28 +64,29 @@ beta/
   js/roles.js                  catálogo de personajes (presentación) y Puntos sugeridos
   js/narrador.js               voz (speechSynthesis), cola de frases, silenciar
   js/textos-narrador.js        todas las frases del narrador
-  js/sonido.js                 sonidos (solo en el móvil del narrador)
+  js/audio.js                  todo el sonido por Web Audio (nunca <audio>), mediaSession, audioSession «playback»
+  js/ambiente.js               música de ambiente: hueco desactivado
   js/cuenta.js, js/cabeza.js   cuenta opcional y personaje (de Punto Falso; listas de colores = Punto Ciego)
   img/logo.png, emblema.png    logo con texto (portada) y emblema sin texto (iconos de la app); ambos transparentes
   assets/personaje3d.js, .bin  personaje 3D del editor (de Punto Ciego)
-  audio/*.wav                  sonidos provisionales (noche, amanecer, muerte, votacion, eliminado, tic, victoria-…)
   vendor/                      supabase-js (UMD) y qrcode
   sw.js, manifest.json         PWA: red primero; subir VERSION al publicar
   soporte.html, terminos.html  adaptados de Punto Falso; privacidad.html redirige a /privacidad/
 supabase/migrations/           tablas y funciones del juego (aplicadas en el proyecto «Punto ciego», qsmcdfyyxvqmesnbwsod)
-scripts/sonidos-provisionales.mjs   genera los .wav provisionales
 scripts/iconos.mjs                  genera los iconos de la app a partir de beta/img/emblema.png
 ```
 
-Para cambiar un sonido: sustituye el archivo en `beta/audio/` (si cambia la extensión, cambia la ruta en `SONIDOS` de `sonido.js`).
+La música de ambiente se activará más adelante en `js/ambiente.js` (`AMBIENTE.activo` y `AMBIENTE.archivo`); no hay efectos de sonido.
 
 Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche en las funciones SQL (`duerme_empezar`, `duerme_actuar`, `_duerme_noche_fin`), lo que ve en `duerme_vista`, su pantalla en `partida.js` y sus frases en `textos-narrador.js`.
 
 ## Audio en iPhone (importante)
 
-**Nunca usar elementos `<audio>`/`<video>`** (ni audio en silencio en bucle): iOS los trata como música y deja el reproductor «Punto Duerme» en la pantalla de bloqueo. Todo el sonido (voz y efectos) va por **Web Audio** (`js/audio.js`: `AudioContext`, `decodeAudioData`, `BufferSource`). `desbloquea()` se llama desde un toque («Crear», «Unirme», «Empezar», «Volver a la partida», empezar un solo móvil); `reanuda()` en cada toque por si iOS interrumpió el contexto. `liberaAudio()` para todo, cierra el contexto y limpia `navigator.mediaSession` (metadata null, playbackState `none`, sin manejadores) al salir de la partida, en `pagehide` y al ocultarse la página; cada clip se desconecta al terminar. La pantalla se mantiene encendida **solo con la Wake Lock API** (`app.js`), que se suelta al salir y en `pagehide`.
+**Nunca usar elementos `<audio>`/`<video>`** (ni audio en silencio en bucle): iOS los trata como música y deja el reproductor «Punto Duerme» en la pantalla de bloqueo. Todo el sonido (la voz grabada; no hay efectos) va por **Web Audio** (`js/audio.js`: `AudioContext`, `decodeAudioData`, `BufferSource`). `desbloquea()` pone `navigator.audioSession.type = 'playback'` donde exista (así la voz grabada suena con el modo silencio del iPhone; `liberaAudio()` lo devuelve a `auto`) y se llama desde un toque («Crear», «Unirme», «Empezar», «Volver a la partida», empezar un solo móvil); `reanuda()` en cada toque por si iOS interrumpió el contexto. `liberaAudio()` para todo, cierra el contexto y limpia `navigator.mediaSession` (metadata null, playbackState `none`, sin manejadores) al salir de la partida, en `pagehide` y al ocultarse la página; cada clip se desconecta al terminar. La pantalla se mantiene encendida **solo con la Wake Lock API** (`app.js`), que se suelta al salir y en `pagehide`.
 
 ## Voz del narrador (audios Gemini TTS)
+
+- **Modo silencio del iPhone**: la voz del navegador (`speechSynthesis`) NO suena con el modo silencio y no tiene arreglo; los audios grabados (Web Audio) sí. Mientras no haya audios grabados (`vozGrabada()` en `narrador.js`), la sala de espera del narrador y los ajustes del modo de un solo móvil muestran «Quita el modo silencio para oír al narrador».
 
 - Audios en `beta/audio/voz/<id>-<n>.mp3` (id de frase de `textos-narrador.js`, n = variante desde 1) y `indice.json` (lista de los que existen). `narrador.js` localiza cada frase por su texto, la reproduce como blob y, si falta cualquier audio, habla la voz del navegador. Los audios se precargan en memoria y el service worker los mete en su caché al instalarse (`sw.js`, lee `indice.json`), así suenan también sin conexión en el modo de un solo móvil.
 - **Las frases no llevan nombres ni tiempos** (no se pueden pregrabar): el narrador dice «este jugador» y el nombre sale grande en pantalla; el tiempo del debate sale en el reloj.

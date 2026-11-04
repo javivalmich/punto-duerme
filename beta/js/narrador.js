@@ -123,4 +123,6 @@ export function duracionTexto(texto) {
   if (clips && clips.every(c => DURS[c])) return clips.reduce((t, c) => t + DURS[c] + 0.35, 0);
   return dura(String(texto || '')) * 1.1 / 1000;
 }
+/* ¿Hay audios grabados del narrador? (si no, habla la voz del navegador, que NO suena con el modo silencio del iPhone) */
+export const vozGrabada = () => !!(INDICE && INDICE.size);
 export const hayVoz = () => !!SS;

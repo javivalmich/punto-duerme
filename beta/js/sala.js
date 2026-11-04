@@ -1,11 +1,11 @@
 /* Portada, crear partida, unirse y sala de espera. */
 import { $, esc, lsGet, lsSet, cleanName, show, toast, sheet, closeSheet, plural } from './util.js';
 import { rpc, textoError } from './red.js';
-import { E, entra, olvida, accion, sesionGuardada, soyAnfitrion, conectado } from './estado.js';
+import { E, entra, olvida, accion, sesionGuardada, soyAnfitrion, soyNarrador, conectado } from './estado.js';
 import { avImg, miLook, miNombre } from './cuenta.js';
 import { sugerirPuntos, puntosPara, maxPuntos } from './roles.js';
-import { desbloquea } from './narrador.js';
-import { precarga } from './sonido.js';
+import { desbloquea, vozGrabada, VOZ } from './narrador.js';
+import { precarga } from './ambiente.js';
 import { salirSheet } from './partida.js';
 import { renderPruebasSala } from './pruebas.js';
 import { abrirSolo, reanudar, soloGuardado } from './solo.js';
@@ -108,6 +108,7 @@ export function renderSala() {
   pinta('saLista', lista);
   pinta('saAjustes', ajustesHTML(s.config, host, jugadores));
   renderPruebasSala();
+  $('saSilencio').hidden = !(soyNarrador() && !vozGrabada() && !VOZ.mudo);
   $('saEmpezar').hidden = !host;
   $('saEmpezar').disabled = jugadores < 4;
   $('saNota').textContent = host

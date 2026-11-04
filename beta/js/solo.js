@@ -14,8 +14,8 @@
 import { $, esc, sheet, closeSheet, toast, lsGet, lsSet, lsDel, show, tema, plural, cleanName, listaNombres } from './util.js';
 import { ROLES, NOCHE, nombreRol, puntosPara, maxPuntos, sugerirPuntos } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, desbloquea, VOZ } from './narrador.js';
-import { suena, precarga } from './sonido.js';
+import { di, calla, silencia, desbloquea, VOZ, vozGrabada } from './narrador.js';
+import { precarga } from './ambiente.js';
 import { FASES, cartaRolHTML, ICO_VOZ, ICO_MUDO } from './partida.js';
 import { avImg } from './cuenta.js';
 import { irInicio } from './sala.js';
@@ -50,6 +50,7 @@ function renderCfg() {
     <div class="row"><div><div class="lbl">Revelar el papel</div><div class="sub">De los muertos y los eliminados</div></div>
       <button type="button" class="switch" role="switch" data-rev aria-checked="${!!CFG.revelar}" aria-label="Revelar el papel"></button></div>`;
   $('soEmpezar').disabled = n < 4;
+  $('soSilencio').hidden = vozGrabada() || VOZ.mudo;
   $('soNota').textContent = n < 4 ? `Añade al menos 4 jugadores (ahora ${n}).` : 'Cuando estéis todos, pulsa «Empezar». Os iréis pasando este móvil.';
 }
 const guardaCfg = () => lsSet('solo-cfg', CFG);
@@ -117,7 +118,6 @@ function entra() {
       if (s.i === 0 && s.paso === 'pasa') habla(texto('bienvenida', null, sm));
       break;
     case 'anochece':
-      suena('noche');
       habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 900));
       break;
     case 'noche': {
@@ -135,7 +135,6 @@ function entra() {
     }
     case 'amanece': {
       const m = S.pub.muertos || [];
-      suena('amanecer'); if (m.length) setTimeout(() => suena('muerte'), 1600);
       habla(texto('amanece_inicio', null, sm) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sm) : m.length ? texto('amanece_muerto', null, sm) : texto('amanece_nadie', null, sm)),
         () => luego(() => { ganador() ? ir('final') : ir('debate') }, 2200));
       break;
@@ -145,11 +144,10 @@ function entra() {
       arrancaCuenta();
       break;
     case 'votacion':
-      if (s.i === 0 && s.paso === 'pasa') { suena('votacion'); habla(texto('votacion', null, sm)) }
+      if (s.i === 0 && s.paso === 'pasa') habla(texto('votacion', null, sm))
       break;
     case 'resultado': {
       const e = S.pub.eliminado, siguiente = () => { if (ganador()) ir('final'); else { S.ronda++; ir('anochece') } };
-      if (e) suena('eliminado');
       /* la frase acaba en suspense («…y señala a…»): el nombre aparece al terminar */
       if (e && !s.revela) habla(texto('eliminado', null, sm), () => { S.sub.revela = true; guarda(); render(); luego(siguiente, 7000) });
       else if (e) luego(siguiente, 7000);
@@ -158,7 +156,7 @@ function entra() {
     }
     case 'final': {
       const g = S.pub.ganador = ganador();
-      suena('victoria-' + g); habla(texto(g === 'puntos' ? 'gana_puntos' : 'gana_pueblo', null, sm));
+      habla(texto(g === 'puntos' ? 'gana_puntos' : 'gana_pueblo', null, sm));
       guarda();
       break;
     }
@@ -193,7 +191,6 @@ function arrancaCuenta() {
     const txt = Math.floor(Math.max(0, r) / 60) + ':' + String(Math.max(0, r) % 60).padStart(2, '0');
     if (el.textContent !== txt) el.textContent = txt;
     el.classList.toggle('poco', r <= 10);
-    if (r <= 5 && r > 0 && !avisos.has('t' + r)) { avisos.add('t' + r); suena('tic') }
     if (r <= 0) { clearInterval(CUENTA); empiezaVoto() }
   };
   tic(); CUENTA = setInterval(tic, 250);

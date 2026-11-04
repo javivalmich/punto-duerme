@@ -1,6 +1,6 @@
 /* Punto Duerme · arranque y reparto de pantallas.
    Estructura: estado.js (sincronización), red.js (Supabase), sala.js (portada, crear, unirse, sala de
-   espera), partida.js (la partida), narrador.js + textos-narrador.js (voz), sonido.js, cuenta.js (cuenta
+   espera), partida.js (la partida), narrador.js + textos-narrador.js (voz), ambiente.js (música, desactivada), cuenta.js (cuenta
    y personaje), roles.js (personajes). Ver CLAUDE.md. */
 import { $, QS, show, pantalla, toast, closeSheet, tema } from './util.js';
 import { revisaCanal, rpc } from './red.js';

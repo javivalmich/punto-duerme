@@ -11,7 +11,6 @@ import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
 import { di, calla, silencia, VOZ, duracionTexto } from './narrador.js';
-import { suena } from './sonido.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
@@ -62,7 +61,6 @@ export function renderJuego() {
   else pinta('jFijo', f.fijo.includes('rolCard') ? $('jFijo')._h : f.fijo);
   pinta('jVivo', f.vivo);
   renderAviso();
-  tic();
   dirige();
   programaAvance();
 }
@@ -171,18 +169,12 @@ const CUERPO = {
 
 /* ---------- Narrador: habla al empezar cada fase y cierra las narradas al terminar ---------- */
 const DIR = { k: '', avisos: new Set() };
-const SONIDO_FASE = { anochece: 'noche', votacion: 'votacion' };
 function dirige() {
   if (!soyNarrador()) { if (DIR.k) { DIR.k = ''; calla() } return }
   const s = E.V.sala, k = s.codigo + '|' + s.ronda + '|' + s.fase + '|' + s.desde;
   if (k === DIR.k) return;
   DIR.k = k; DIR.avisos = new Set();
   const p = s.publico || {};
-  let son = SONIDO_FASE[s.fase];
-  if (s.fase === 'amanece') son = (p.muertos || []).length ? 'muerte' : 'amanecer';
-  if (s.fase === 'resultado') son = p.eliminado ? 'eliminado' : null;
-  if (s.fase === 'final') son = p.ganador === 'puntos' ? 'victoria-puntos' : 'victoria-ciegos';
-  if (son) suena(son);
   const t = textoFase(E.V), fase = s.fase, desde = s.desde;
   const sigue = () => {
     if (!NARRADAS.includes(fase)) return;
@@ -190,14 +182,6 @@ function dirige() {
   };
   setTimeout(() => { if (DIR.k === k) di(t, sigue) }, son ? 900 : 200);
 }
-/* Avisos de tiempo y «tic» de los últimos segundos (solo el narrador) */
-function tic() {
-  if (!E.V || !soyNarrador()) return;
-  const s = E.V.sala; if (!s.hasta) return;
-  const q = Math.ceil((s.hasta - ahora()) / 1000), total = (s.hasta - s.desde) / 1000;
-  if ((s.fase === 'noche' || s.fase === 'votacion') && q > 0 && q <= 5 && !DIR.avisos.has('t' + q)) { DIR.avisos.add('t' + q); suena('tic') }
-}
-
 /* ---------- Pasar de fase cuando se acaba el tiempo ---------- */
 const AV = { k: '', t: 0 };
 function programaAvance() {
@@ -221,7 +205,7 @@ export function pintaCuentas() {
   const duermo = s && s.fase === 'noche' && !(E.V.yo.vivo && E.V.yo.rol === 'punto'); /* de noche solo ve la cuenta quien actúa */
   const txt = t == null || duermo || NARRADAS.includes(s.fase) || s.fase === 'reparto' ? '' : Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0');
   document.querySelectorAll('[data-cuenta]').forEach(el => { if (el.textContent !== txt) el.textContent = txt; el.classList.toggle('poco', t != null && t <= 10) });
-  if (s) { renderAviso(); tic(); if (s.fase === 'resultado' && E.REV !== revelado(E.V)) { E.REV = revelado(E.V); renderJuego() } }
+  if (s) { renderAviso(); if (s.fase === 'resultado' && E.REV !== revelado(E.V)) { E.REV = revelado(E.V); renderJuego() } }
 }
 
 /* ---------- Menú y salir ---------- */
@@ -248,7 +232,7 @@ function menu() {
     $('mnX').onclick = closeSheet;
     if ($('mnRol')) $('mnRol').onclick = () => sheet(cartaHTML(E.V) + '<button class="link" id="rlX">Cerrar</button>', () => { $('rlX').onclick = closeSheet });
     if ($('mnMudo')) $('mnMudo').onclick = () => { silencia(!VOZ.mudo); closeSheet(); renderJuego() };
-    if ($('mnNarr')) $('mnNarr').onclick = () => sheet(`<h3>¿Ser el narrador?</h3><p>Tu móvil pondrá la voz y los sonidos de la partida. Úsalo si el móvil del narrador se ha quedado sin batería o sin conexión.</p><button class="act" id="snSi">Ser el narrador</button><button class="link" id="snNo">Cancelar</button>`, () => {
+    if ($('mnNarr')) $('mnNarr').onclick = () => sheet(`<h3>¿Ser el narrador?</h3><p>Tu móvil pondrá la voz del narrador. Úsalo si el móvil del narrador se ha quedado sin batería o sin conexión.</p><button class="act" id="snSi">Ser el narrador</button><button class="link" id="snNo">Cancelar</button>`, () => {
       $('snNo').onclick = closeSheet; $('snSi').onclick = () => { closeSheet(); serNarrador() };
     });
     if ($('mnPru')) $('mnPru').onclick = abrePanelPruebas;
