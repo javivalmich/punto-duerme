@@ -37,13 +37,12 @@ export function desbloquea() {
 const HIST = [];
 const marca = t => { HIST.push(((performance.now() / 1000) | 0) + ' s: ' + t); if (HIST.length > 8) HIST.shift() };
 export const estadoAudio = () => ({ ctx: !Ctor ? 'sin Web Audio' : CTX ? CTX.state : 'sin crear', sesion: navigator.audioSession ? navigator.audioSession.type : 'no soportada', hist: HIST.slice() });
-/* Antes de cada clip: si iOS lo ha suspendido o interrumpido, intenta reanudarlo (espera como mucho `ms`) */
+/* Antes de cada clip: si iOS lo ha suspendido o interrumpido, intenta reanudarlo (espera como mucho `ms`).
+   Si resume() lanza una excepción, se propaga (narrador.js pasa entonces a la voz del navegador); si solo no se reanuda, no. */
 export async function aseguraAudio(ms) {
   if (!CTX || CTX.state === 'running' || CTX.state === 'closed') return;
-  try { await Promise.race([CTX.resume(), new Promise(r => setTimeout(r, ms || 1200))]) } catch (e) { marca('resume falló: ' + (e && e.message || e)) }
+  try { await Promise.race([CTX.resume(), new Promise(r => setTimeout(r, ms || 1200))]) } catch (e) { marca('resume falló: ' + (e && e.message || e)); throw e }
 }
-/* Segundos que ha avanzado el reloj del contexto (si no avanza, aunque diga «running», no está sonando nada) */
-export const relojAudio = () => CTX ? CTX.currentTime : -1;
 export const audioListo = () => !Ctor || (!!CTX && CTX.state === 'running');
 /* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
 /* Los toques y el volver a la app SOLO reanudan el contexto si está suspendido o interrumpido, y nunca mientras suena una frase

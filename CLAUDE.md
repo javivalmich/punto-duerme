@@ -88,9 +88,21 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 
 En el modo de un solo móvil, cada votante tiene también «No votar» en su voto secreto (`S.votos[i] = -1`).
 
-**Voz que no se queda muda en rondas posteriores** (`narrador.js`): `sonando()` ya no usa `speechSynthesis.speaking/pending` (en iOS pueden quedarse en `true` para siempre tras un `cancel()` y entonces se bloqueaban el desbloqueo, `reanuda()` y el botón «Activar la voz»): usa un estado propio (`HABLA_HASTA`, que se limpia en `onend`/`onerror`/cancelación y caduca solo). Si el `AudioContext` no está `running` tras intentar reanudarlo, o su reloj (`relojAudio()`) no avanza a los 0,7 s de arrancar un clip, se avisa («Activar la voz») y habla la voz del navegador en vez de «reproducir» en silencio; si la voz del navegador no arranca en 2,5 s se vacía la cola y se reintenta una vez. El panel guarda las últimas 40 frases, con la causa de cada fallo. Probado con 4 rondas completas en los dos modos tocando la pantalla cada 0,6 s: 27 frases, sin errores.
+**Voz que no se queda muda en rondas posteriores** (`narrador.js`): `sonando()` ya no usa `speechSynthesis.speaking/pending` (en iOS pueden quedarse en `true` para siempre tras un `cancel()` y entonces se bloqueaban el desbloqueo, `reanuda()` y el botón «Activar la voz»): usa un estado propio (`HABLA_HASTA`, que se limpia en `onend`/`onerror`/cancelación y caduca solo). Si la voz del navegador no arranca en 2,5 s se vacía la cola y se reintenta una vez (solo cuando se usa esa voz). El panel guarda las últimas 40 frases.
+
+**Regla única para elegir voz** (`reproduce()` en `narrador.js`, VERSION 29): si la frase tiene audio en `indice.json`, **suena la grabada, siempre**. Solo habla la voz del navegador si la frase no tiene audio en el índice o si el audio da un **error real**: falla la descarga, falla `decodeAudioData`, o `resume()`/`start()` lanzan una excepción. **Nunca se decide por tiempo que un clip «no suena»** (en la VERSION 27 se añadió «si el reloj del `AudioContext` no avanza a los 0,7 s, voz del navegador» y en iOS saltaba en falso: el iPhone solo oía la voz robótica; se quitó, junto con «si el contexto no está `running`, voz del navegador»). Si el contexto sigue `suspended`/`interrupted` tras intentar `resume()`, el clip se arranca igual (suena en cuanto se reanuda) y el narrador ve «Activar la voz del narrador», que reanuda y repite la frase grabada; cualquier toque también lo reanuda. Un clip con el contexto parado no cuenta como «sonando» (`sonando()`), para que el toque sí pueda reanudarlo. En el panel, cada frase sale «grabada» o «navegador · motivo» («sin audio en el índice», «error de decodificación de …: …», «error de descarga…», «resume() falló…», «start() falló…»). Probado (VERSION 29, escritorio): un solo móvil, 5 noches con 419 toques simulados, y multimóvil con 6 bots, 5 noches con 438 toques: todas las frases con audio «grabada» (19) y el resto «navegador · sin audio en el índice» (49); noche 5,02–5,03 s y 2,90–3,12 s.
 
 **Los toques no cortan la voz**: el desbloqueo completo (`desbloquea()`: voz vacía, contexto, `audioSession`) solo se hace en «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y «Activar la voz», y se salta si hay una frase sonando (`sonando()` en `narrador.js`). Cualquier otro toque (y volver a la app) solo llama a `reanuda()`, que reanuda el `AudioContext` si está suspendido o interrumpido y **nunca mientras suena una frase**; no para, cancela ni recrea nada.
+
+## Lista de comprobación de voz
+
+Repetirla antes de publicar **cualquier** cambio que toque el audio o la voz (`narrador.js`, `audio.js`, `textos-narrador.js`, `audio/voz/`, `sw.js`):
+
+1. **Multimóvil** con bots (escritorio): 4 rondas seguidas, simulando toques en la pantalla cada ~0,6 s mientras habla. En el panel de pruebas («Estado de la voz»), todas las frases con audio salen **«grabada»** y las demás **«navegador · sin audio en el índice»**; ningún otro motivo.
+2. **Un solo móvil**: lo mismo, 4 rondas seguidas con toques mientras habla.
+3. **Tiempos de la noche** (bloque «Tiempos de la noche» del panel): ~5 s de «Cae la noche» a «Los Puntos despiertan» y ~3 s de «vuelven a dormir» al amanecer, en los dos modos.
+4. **iPhone** (lo prueba el usuario): voz grabada en multimóvil y en un solo móvil, con el **modo silencio activado y desactivado**; mirar el panel por si alguna frase con audio sale «navegador».
+5. Subir `VERSION` en `beta/sw.js`.
 
 ## Voz y bloqueo de iOS
 

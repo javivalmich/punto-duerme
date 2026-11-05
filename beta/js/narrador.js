@@ -3,7 +3,7 @@
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
 import { TEXTOS } from './textos-narrador.js';
-import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio, fijaOcupado, relojAudio } from './audio.js';
+import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio, fijaOcupado } from './audio.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0, bloqueada: false };
@@ -55,12 +55,12 @@ export function marcaT(nombre) { const t = performance.now(), u = TIEMPOS[TIEMPO
    y si se usara para decidir si «hay algo sonando» se bloquearían el desbloqueo, la reanudación del audio y el botón «Activar la voz». */
 let HABLA_HASTA = 0;
 const hablando = () => Date.now() < HABLA_HASTA;
-const nota = (texto, via, extra) => { const e = { t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '', fin: '' }; DIAG.log.unshift(e); DIAG.log.length = Math.min(DIAG.log.length, 40); return e };
+const nota = (texto, via, extra) => { const e = { t: new Date().toTimeString().slice(0, 8), via, motivo: '', txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '', fin: '' }; DIAG.log.unshift(e); DIAG.log.length = Math.min(DIAG.log.length, 40); return e };
 export const diagVoz = () => ({ indice: INDICE ? INDICE.size : null, ...estadoAudio(), mudo: VOZ.mudo, bloqueada: VOZ.bloqueada, voz: VOZ.voz ? VOZ.voz.name : 'ninguna', log: DIAG.log });
 function faltaDe(texto) {
   if (!INDICE) return 'índice sin cargar';
   let r = String(texto || '').trim();
-  while (r) { const f = FRASES.find(x => r.startsWith(x.t) && INDICE.has(x.clip)); if (!f) return 'sin audio para «' + r.slice(0, 28) + '…»'; r = r.slice(f.t.length).replace(/^\s*\|\s*/, '') }
+  while (r) { const f = FRASES.find(x => r.startsWith(x.t) && INDICE.has(x.clip)); if (!f) return 'sin audio en el índice' + (r.length < String(texto || '').trim().length ? ' (parte «' + r.slice(0, 28) + '…»)' : ''); r = r.slice(f.t.length).replace(/^\s*\|\s*/, '') }
   return '';
 }
 function clipsDe(texto) {
@@ -75,34 +75,41 @@ function clipsDe(texto) {
 const urlClip = c => 'audio/voz/' + c + '.mp3';
 export function precargaVoz() { if (INDICE) INDICE.forEach(c => carga(urlClip(c)).catch(() => { })); else setTimeout(precargaVoz, 1500) }
 const paraClip = () => { if (CLIP) { CLIP.parar(); CLIP = null } };
-/* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo) */
+/* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo).
+   Regla única: si la frase tiene audio grabado, suena el grabado. Solo se pasa a la voz del navegador (fallo(motivo)) si hay un error
+   real: falla la descarga, falla decodeAudioData o resume()/start() lanzan una excepción. Nunca se decide por tiempo que un clip «no suena».
+   Si el contexto sigue suspendido o interrumpido tras intentar reanudarlo, el clip se arranca igual (sonará en cuanto se reanude, con
+   cualquier toque) y se muestra «Activar la voz del narrador», que reanuda y repite la frase grabada. */
+const desc = e => (e && (e.name ? e.name + ' ' : '') + (e.message || '')) || String(e);
 function reproduce(clips, vale, fin, fallo, ent, empieza) {
   let i = 0;
   const sig = async () => {
     if (!vale()) return;
     if (i >= clips.length) return fin();
-    try {
-      const buf = await decodifica(urlClip(clips[i++]), false);
-      if (!vale()) return;
-      await aseguraAudio(1200);
-      if (!vale()) return;
-      /* contexto suspendido/interrumpido y sin forma de reanudarlo (iOS lo exige con un toque): antes se «reproducía» en silencio y
-         la partida seguía muda; ahora se avisa y habla la voz del navegador */
-      if (!audioListo()) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ': no se puede reanudar, voz del navegador'; return fallo() }
-      const t0a = relojAudio(), mio = CLIP = suenaBuffer(buf, () => { if (CLIP === mio) CLIP = null; i >= clips.length ? sig() : setTimeout(sig, 350) /* 0,35 s entre clips, pero ninguno tras el último */ });
-      empieza();
-      /* vigilante: si a los 0,7 s el reloj del contexto no ha avanzado, no está sonando nada */
-      setTimeout(() => { if (vale() && CLIP === mio && relojAudio() - t0a < 0.2 && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ el reloj del audio está parado (no se oye); voz del navegador'; paraClip(); fallo() } }, 700);
-      if (i === 1) ent.extra += ' · contexto ' + estadoAudio().ctx;
-      setTimeout(() => { if (vale() && !audioListo() && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ' tras 1,5 s: no se oye' } }, 1500); /* contexto de audio interrumpido por iOS */
-    } catch (e) { ent.extra += ' · ⚠ ' + (clips[i - 1] || '') + ': ' + (e && (e.name + ' ' + e.message) || e); if (vale()) fallo() }
+    const c = clips[i++], url = urlClip(c);
+    let buf;
+    try { await carga(url) } catch (e) { if (vale()) fallo('error de descarga de ' + c + ': ' + desc(e)); return }
+    try { buf = await decodifica(url, false) } catch (e) { if (vale()) fallo('error de decodificación de ' + c + ': ' + desc(e)); return }
+    if (!vale()) return;
+    try { await aseguraAudio(1200) } catch (e) { if (vale()) fallo('resume() falló: ' + desc(e)); return }
+    if (!vale()) return;
+    let mio;
+    try { mio = CLIP = suenaBuffer(buf, () => { if (CLIP === mio) CLIP = null; i >= clips.length ? sig() : setTimeout(sig, 350) /* 0,35 s entre clips, pero ninguno tras el último */ }) }
+    catch (e) { if (vale()) fallo('start() falló en ' + c + ': ' + desc(e)); return }
+    empieza();
+    if (i === 1) ent.extra += ' · contexto ' + estadoAudio().ctx;
+    if (audioListo()) marcaBloqueo(false);
+    else { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ': esperando un toque («Activar la voz»)' }
+    /* si iOS lo interrumpe justo después de arrancar, también se avisa (sin cambiar de voz) */
+    setTimeout(() => { if (vale() && CLIP === mio && !audioListo() && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ' tras 1,5 s: esperando un toque' } }, 1500);
   };
   sig();
 }
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
-/* ¿Está sonando ahora una frase (grabada o del navegador)? */
-export const sonando = () => !!CLIP || hablando();
+/* ¿Está sonando ahora una frase (grabada o del navegador)? Un clip con el contexto suspendido o interrumpido no suena: así un toque
+   (o «Activar la voz») sí puede reanudarlo y no se queda esperando a que acabe algo que no se oye. */
+export const sonando = () => (!!CLIP && audioListo()) || hablando();
 fijaOcupado(() => sonando());
 export function desbloquea() {
   /* El desbloqueo completo solo se hace en los toques de «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y
@@ -156,12 +163,13 @@ export function di(texto, fin, opts) {
     ponTope(limite);
     cancelaSiHace();
     ent = nota(texto, 'grabada', clips.join(' + ') + ' · límite ' + (limite / 1000).toFixed(1) + ' s');
-    reproduce(clips, () => yo === VOZ.cola, () => acaba('audio'), () => { ent.via = 'navegador'; ent.extra += ' · el audio falló, habla el navegador'; ponTope(Math.max(1500, limite - (Date.now() - t0))); hablaNavegador() }, ent, empieza);
+    reproduce(clips, () => yo === VOZ.cola, () => acaba('audio'), motivo => { paraClip(); ent.via = 'navegador'; ent.motivo = motivo; ponTope(Math.max(1500, limite - (Date.now() - t0))); hablaNavegador() }, ent, empieza);
     return;
   }
   /* respaldo: si el navegador no avisa del final (pasa en pestañas de fondo), se sigue igualmente */
   ponTope(dura(texto) * 1.8 + 3000);
-  ent = nota(texto, VOZ.mudo ? 'silencio' : 'navegador', VOZ.mudo ? 'narrador silenciado' : faltaDe(texto));
+  ent = nota(texto, VOZ.mudo ? 'silencio' : 'navegador', '');
+  ent.motivo = VOZ.mudo ? 'narrador silenciado' : faltaDe(texto);
   hablaNavegador();
   function hablaNavegador() {
   if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { empieza(); ponTope(dura(texto)); return }
