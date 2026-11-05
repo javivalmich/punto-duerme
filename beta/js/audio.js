@@ -29,7 +29,7 @@ export function desbloquea() {
   try {
     if (!CTX || CTX.state === 'closed') { CTX = new Ctor(); marca('contexto creado: ' + CTX.state); CTX.onstatechange = () => marca('estado → ' + (CTX && CTX.state)) }
     if (CTX.state !== 'running') CTX.resume().catch(() => { });
-    const b = CTX.createBuffer(1, 1, 22050), s = CTX.createBufferSource(); s.buffer = b; s.connect(CTX.destination); s.start(0);
+    const b = CTX.createBuffer(1, 441, 22050) /* ceros: silencio total, sin clic */, s = CTX.createBufferSource(); s.buffer = b; s.connect(CTX.destination); s.start(0);
     s.onended = () => { try { s.disconnect() } catch (e) { } };
   } catch (e) { }
 }

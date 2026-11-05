@@ -550,3 +550,7 @@ html.fase-oscura #jAviso .pruebas{display:none}
 #s-solo-cfg .names .nm{padding:3px 4px 3px 12px;font-size:.95rem}
 #s-solo-cfg .names .nm button{width:26px;height:26px}
 #s-solo-cfg .addrow input{padding:9px 14px}
+
+/* No votar */
+.vbtn.nov { justify-content: center; opacity: .85 }
+.abst { text-align: center; margin-top: 10px }

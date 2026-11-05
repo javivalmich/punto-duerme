@@ -21,7 +21,7 @@ function panelHTML(V, enSala) {
   const opts = sel => '<option value="">Al azar</option>' + js.map(j => `<option value="${j.id}" ${sel === j.id ? 'selected' : ''}>${esc(j.nombre)}${j.vivo ? '' : ' (muerto)'}</option>`).join('');
   return `<div class="row"><div><div class="lbl">Ver roles de los bots</div><div class="sub">Solo los ves tú</div></div><button type="button" class="switch" role="switch" data-pr="ver_roles" aria-checked="${!!p.ver_roles}" aria-label="Ver roles de los bots"></button></div>
     <div class="row"><div><div class="lbl">Los bots marcan a</div><div class="sub">De noche; los Puntos, su víctima</div></div><select class="field sel" data-pr="forzar_marca" aria-label="Los bots marcan a">${opts(p.forzar_marca)}</select></div>
-    <div class="row"><div><div class="lbl">Los bots votan a</div><div class="sub">De día, en la votación</div></div><select class="field sel" data-pr="forzar_voto" aria-label="Los bots votan a">${opts(p.forzar_voto)}</select></div>
+    <div class="row"><div><div class="lbl">Los bots votan a</div><div class="sub">De día, en la votación</div></div><select class="field sel" data-pr="forzar_voto" aria-label="Los bots votan a">${opts(p.forzar_voto).replace('</option>', '</option><option value="-"' + (p.forzar_voto === '-' ? ' selected' : '') + '>Nadie (no votan)</option>')}</select></div>
     ${enSala ? '<button class="act sec" data-pr-quitar>Quitar todos los bots</button>' : ''}`;
 }
 /* Estado de la voz (solo beta): versión de la app, audios del índice, contexto de audio y qué ha sonado en cada frase */

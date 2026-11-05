@@ -139,12 +139,12 @@ const CUERPO = {
     };
   },
   votacion(V) {
-    const me = V.yo, actua = me.vivo, vs = vivos(V), mio = V.mio.voto;
+    const me = V.yo, actua = me.vivo, vs = vivos(V), mio = V.mio.voto, abst = mio === '';
     const prog = `<div class="vprog">Han votado <b>${V.votos || 0}/${vs.length}</b><span class="bar"><i style="width:${vs.length ? Math.round(100 * (V.votos || 0) / vs.length) : 0}%"></i></span></div>`;
     if (!actua) return { fijo: `<div class="phase"><p class="pt">Votación</p><p>Los jugadores vivos están votando en su móvil.</p></div>`, vivo: prog };
-    const lista = vs.filter(j => j.id !== me.id).map(j => `<button class="vbtn${mio === j.id ? ' on' : ''}" data-voto="${j.id}">${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${ptag(j)}<span class="chk">✓</span></button>`).join('');
+    const lista = vs.filter(j => j.id !== me.id).map(j => `<button class="vbtn${mio === j.id ? ' on' : ''}" data-voto="${j.id}">${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${ptag(j)}<span class="chk">✓</span></button>`).join('') + `<button class="vbtn nov${abst ? ' on' : ''}" data-abstiene="1"><span class="n">No votar</span><span class="chk">✓</span></button>`;
     return {
-      fijo: `<div class="phase"><p class="pt">¿A quién echáis del pueblo?</p><p>Puedes cambiar tu voto hasta que voten todos.</p></div>`,
+      fijo: `<div class="phase"><p class="pt">¿A quién echáis del pueblo?</p><p>Puedes cambiar tu voto, o no votar, hasta que acabe la votación.</p></div>`,
       vivo: `<div class="vlist">${lista}</div>${prog}`
     };
   },
@@ -155,7 +155,8 @@ const CUERPO = {
     const caja = e ? `<div class="muerto">${avImg(j && j.look, 'xl')}<b>${esc(j ? j.nombre : '')}</b><span>${e.rol ? 'era ' + (e.rol === 'punto' ? 'un Punto' : 'un Ciego') : 'abandona el pueblo'}</span></div>`
       : `<div class="muerto nadie"><b>Nadie sale</b><span>${rec.length ? 'hay empate' : 'nadie ha votado'}</span></div>`;
     const barras = rec.length ? `<div class="recuento">${rec.map(r => { const x = jug(r.id) || {}; return `<div class="cr">${avImg(x.look, 'sm')}<span class="nm">${esc(x.nombre || '')}</span><span class="b"><i style="width:${Math.round(100 * r.n / max)}%"></i></span><span class="v">${r.n}</span></div>` }).join('')}</div>` : '';
-    return { fijo: caja + barras, vivo: '' };
+    const ab = p.abstenciones || 0, abt = ab ? `<p class="tiny abst">${ab === 1 ? '1 jugador se ha abstenido' : ab + ' jugadores se han abstenido'}</p>` : '';
+    return { fijo: caja + barras + abt, vivo: '' };
   },
   final(V) {
     const g = (V.sala.publico || {}).ganador, host = soyAnfitrion();
@@ -260,6 +261,7 @@ export function iniciaPartida() {
     const err = x => toast(textoError(x));
     if (b.dataset.marca) { b.classList.add('on'); accion('actuar', { p_tipo: 'marca', p_objetivo: b.dataset.marca }).catch(err) }
     else if (b.dataset.voto) { document.querySelectorAll('[data-voto]').forEach(x => x.classList.toggle('on', x === b)); accion('actuar', { p_tipo: 'voto', p_objetivo: b.dataset.voto }).catch(err) }
+    else if (b.dataset.abstiene) { document.querySelectorAll('[data-voto],[data-abstiene]').forEach(x => x.classList.toggle('on', x === b)); accion('actuar', { p_tipo: 'abstiene', p_objetivo: null }).catch(err) }
     else if (b.dataset.a === 'confirma') { b.disabled = true; accion('actuar', { p_tipo: 'confirma', p_objetivo: null }).catch(err) }
     else if (b.dataset.a === 'listo') { b.disabled = true; accion('actuar', { p_tipo: 'listo', p_objetivo: null }).catch(err) }
     else if (b.dataset.a === 'votarya') { b.disabled = true; accion('actuar', { p_tipo: 'votar_ya', p_objetivo: null }).catch(err) }

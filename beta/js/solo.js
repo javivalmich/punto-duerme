@@ -175,11 +175,12 @@ function empiezaVoto() {
 }
 function finVoto() {
   const cuenta = {};
-  for (const v of Object.values(S.votos)) cuenta[v] = (cuenta[v] || 0) + 1;
+  let abst = 0;
+  for (const v of Object.values(S.votos)) { if (v < 0) abst++; else cuenta[v] = (cuenta[v] || 0) + 1 }
   const rec = Object.entries(cuenta).map(([i, v]) => ({ i: +i, n: S.jug[+i].n, v })).sort((a, b) => b.v - a.v);
   let e = null;
   if (rec.length && (rec.length === 1 || rec[0].v > rec[1].v)) { const j = S.jug[rec[0].i]; j.vivo = false; e = { n: j.n, rol: j.rol } }
-  S.pub = { eliminado: e, recuento: rec.map(r => ({ n: r.n, v: r.v })) };
+  S.pub = { eliminado: e, recuento: rec.map(r => ({ n: r.n, v: r.v })), abstenciones: abst };
   ir('resultado');
 }
 
@@ -244,16 +245,17 @@ const CUERPO = {
     if (s.paso === 'pasa') return { fijo: pasa(j.n), vivo: `<button class="act" data-s="soy">Soy ${esc(j.n)}</button>${MIRA}<p class="vprog">Votan <b>${s.i + 1}/${s.orden.length}</b></p>` };
     return {
       fijo: `<div class="phase"><p class="pt">¿A quién echáis del pueblo?</p><p>Vota en secreto, ${esc(j.n)}.</p></div>`,
-      vivo: lista(vivos().filter(x => x !== j), s.sel, 'data-sel') + `<button class="act" data-s="vota" ${s.sel == null ? 'disabled' : ''}>Confirmar voto</button><p class="tiny">Después, pasa el móvil al siguiente.</p>`
+      vivo: lista(vivos().filter(x => x !== j), s.sel, 'data-sel') + `<button class="act" data-s="vota" ${s.sel == null || s.sel < 0 ? 'disabled' : ''}>Confirmar voto</button><button class="act sec" data-s="abstiene">No votar</button><p class="tiny">Después, pasa el móvil al siguiente.</p>`
     };
   },
   resultado() {
     const p = S.pub, rec = p.recuento || [], max = Math.max(1, ...rec.map(r => r.v)), e = p.eliminado;
     if (e && !S.sub.revela) return { fijo: `<div class="muerto"><div class="suspense" aria-hidden="true">…</div></div>`, vivo: '' };
     const caja = e ? `<div class="muerto">${avImg(null, 'xl')}<b>${esc(e.n)}</b><span>${S.cfg.revelar ? 'era ' + (e.rol === 'punto' ? 'un Punto' : 'un Ciego') : 'abandona el pueblo'}</span></div>`
-      : `<div class="muerto nadie"><b>Nadie sale</b><span>hay empate</span></div>`;
+      : `<div class="muerto nadie"><b>Nadie sale</b><span>${rec.length ? 'hay empate' : 'nadie ha votado'}</span></div>`;
     const barras = rec.length ? `<div class="recuento">${rec.map(r => `<div class="cr">${avImg(null, 'sm')}<span class="nm">${esc(r.n)}</span><span class="b"><i style="width:${Math.round(100 * r.v / max)}%"></i></span><span class="v">${r.v}</span></div>`).join('')}</div>` : '';
-    return { fijo: caja + barras, vivo: `<button class="act sec" data-s="sigue">Continuar</button>` };
+    const ab = p.abstenciones || 0, abt = ab ? `<p class="tiny abst">${ab === 1 ? '1 jugador se ha abstenido' : ab + ' jugadores se han abstenido'}</p>` : '';
+    return { fijo: caja + barras + abt, vivo: `<button class="act sec" data-s="sigue">Continuar</button>` };
   },
   final() {
     const g = ganador();
@@ -319,6 +321,10 @@ export function iniciaSolo() {
     else if (a === 'confirma') { const p = pasos()[s.k]; ACCIONES[p.accion].aplica(s.sel); ir('noche', { k: s.k, paso: 'cierra' }) }
     else if (a === 'vota') {
       S.votos[s.orden[s.i]] = s.sel;
+      s.i + 1 < s.orden.length ? ir('votacion', { orden: s.orden, i: s.i + 1, paso: 'pasa' }) : finVoto();
+    }
+    else if (a === 'abstiene') {
+      S.votos[s.orden[s.i]] = -1;
       s.i + 1 < s.orden.length ? ir('votacion', { orden: s.orden, i: s.i + 1, paso: 'pasa' }) : finVoto();
     }
     else if (a === 'votarya') empiezaVoto();
