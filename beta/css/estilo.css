@@ -86,7 +86,6 @@ body.red .act.sec{background:transparent;border-color:rgba(255,255,255,.55)}
 .hero{text-align:center;padding-top:6px}
 .logo{width:min(62vw,250px,30dvh);aspect-ratio:1;border-radius:28%;background:#0c0c0c;display:block;margin:4px auto 10px;filter:drop-shadow(0 12px 30px rgba(224,18,15,.35))}
 .title{font-weight:900;font-size:clamp(2.5rem,12vw,3.3rem);line-height:1;letter-spacing:.06em}
-.hero .title{font-size:clamp(1.9rem,10.2vw,3.3rem);white-space:nowrap} /* «PUNTO DUERME» es más largo que «PUNTO FALSO»: se ajusta para caber en una línea */
 .tag{color:var(--red);font-weight:600;letter-spacing:.04em;font-size:clamp(.68rem,3.6vw,.82rem);margin-top:8px;white-space:nowrap}
 .lead{color:var(--muted);text-align:center;margin:18px auto 8px;max-width:30ch;font-size:1.05rem}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 18px;margin:16px 0}
