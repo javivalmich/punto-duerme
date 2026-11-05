@@ -10,7 +10,7 @@ import { E, ahora, jug, nombreDe, soyAnfitrion, soyNarrador, conectado, accion, 
 import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz } from './narrador.js';
+import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas, EN_BETA } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
@@ -83,15 +83,14 @@ const vivos = V => V.jugadores.filter(j => j.vivo);
 
 /* Tarjeta del papel: se mantiene pulsada para verla (como la de Punto Falso) */
 function cartaHTML(V) {
-  return cartaRolHTML(V.yo.rol, V.jugadores.filter(j => j.rol === 'punto' && j.id !== V.yo.id).map(j => j.nombre));
+  return cartaRolHTML(V.yo.rol);
 }
-/* rol y nombres de los compañeros Puntos (también la usa el modo de un solo móvil) */
-export function cartaRolHTML(r, comp) {
+/* Tarjeta del papel (también la usa el modo de un solo móvil). Los Puntos no ven quiénes son sus compañeros: se descubren de noche. */
+export function cartaRolHTML(r) {
   const R = ROLES[r] || {};
-  const extra = r === 'punto' ? `<p class="comp">${comp.length ? 'Tus compañeros: <b>' + esc(listaNombres(comp)) + '</b>' : 'Eres el único Punto.'}</p>` : '';
   return `<div class="card rolcard" id="rolCard" tabindex="0" role="button" aria-label="Mantén pulsado para ver tu papel">
     <div class="front"><img class="mascot" src="img/emblema.png" alt=""><b>Mantén pulsado</b><span>para ver tu papel. Que nadie más lo vea.</span></div>
-    <div class="back"><p class="k">Eres</p><p class="rolnom ${r}">${esc((R.nombre || '').toUpperCase())}</p><p class="rcorto">${esc(R.corto || '')}</p><p class="rtexto">${esc(R.texto || '')}</p>${extra}</div>
+    <div class="back"><p class="k">Eres</p><p class="rolnom ${r}">${esc((R.nombre || '').toUpperCase())}</p><p class="rcorto">${esc(R.corto || '')}</p><p class="rtexto">${esc(R.texto || '')}</p></div>
   </div>`;
 }
 
@@ -111,16 +110,15 @@ const CUERPO = {
   noche(V) {
     const me = V.yo, punto = me.rol === 'punto';
     if (!(me.vivo && punto)) return duerme(V);
-    const vp = V.jugadores.filter(j => j.rol === 'punto' && j.vivo);
-    const fijo = `<div class="phase"><p class="pt">Elige a la víctima</p><p class="hintrol">${vp.length > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.'}</p></div>`;
+    const vp = V.puntos_vivos || 1;
+    const fijo = `<div class="phase"><p class="pt">Elige a la víctima</p><p class="hintrol">${vp > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.'}</p></div>`;
+    /* solo el recuento por víctima («1/2»), nunca quién ha marcado: los Puntos no se conocen */
     const marcas = V.marcas || {}, mia = V.mio.marca, conf = 'confirma' in V.mio;
     const lista = vivos(V).filter(j => j.id !== me.id).map(j => {
-      const comp = j.rol === 'punto';
-      const quien = Object.keys(marcas).filter(p => marcas[p] === j.id && p !== me.id).map(nombreDe);
-      return `<button class="vbtn${mia === j.id ? ' on' : ''}${comp ? ' comp' : ''}" data-marca="${j.id}" ${comp || conf ? 'disabled' : ''}>${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${comp ? '<span class="tg">Punto</span>' : ptag(j)}${quien.length ? `<span class="tg marca">${esc(listaNombres(quien))}</span>` : ''}<span class="chk">✓</span></button>`;
+      const n = marcas[j.id] || 0;
+      return `<button class="vbtn${mia === j.id ? ' on' : ''}" data-marca="${j.id}" ${conf ? 'disabled' : ''}>${avImg(j.look, 'sm')}<span class="n">${esc(j.nombre)}</span>${n ? `<span class="tg marca">${n}/${vp}</span>` : ''}<span class="chk">✓</span></button>`;
     }).join('');
-    const todos = vp.every(p => marcas[p.id] && marcas[p.id] === mia);
-    const puede = !!mia && !conf && (vp.length === 1 || todos);
+    const puede = !!mia && !conf && (vp === 1 || marcas[mia] === vp);
     const nota = conf ? 'Hecho. Espera a que el narrador te duerma.' : mia && !puede ? 'Tenéis que marcar todos al mismo para confirmar.' : '';
     return { fijo, vivo: `<div class="vlist">${lista}</div><button class="act" data-a="confirma" ${puede ? '' : 'disabled'}>${conf ? 'Confirmado' : 'Confirmar'}</button><p class="tiny">${nota}</p>` };
   },
@@ -180,7 +178,7 @@ function dirige() {
   const t = textoFase(E.V), fase = s.fase, desde = s.desde;
   const sigue = () => {
     if (!NARRADAS.includes(fase)) return;
-    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'resultado' && p.eliminado ? 7000 : 400); /* el margen tras «…y señala a…» se mantiene; entre frases solo ~1,2 s en total contando el aviso de fin del clip (0,35 s) y la ida y vuelta al servidor */
+    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'anochece' ? PAUSA_CIERRA_OJOS : fase === 'noche_cierra' ? PAUSA_AMANECER : fase === 'resultado' && p.eliminado ? PAUSA_ELIMINADO : PAUSA_FRASES);
   };
   setTimeout(() => { if (DIR.k === k) di(t, sigue) }, 100);
 }

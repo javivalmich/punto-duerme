@@ -14,7 +14,7 @@
 import { $, esc, sheet, closeSheet, toast, lsGet, lsSet, lsDel, show, tema, plural, cleanName, listaNombres } from './util.js';
 import { ROLES, NOCHE, nombreRol, puntosPara, maxPuntos, sugerirPuntos } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, desbloquea, VOZ, vozGrabada } from './narrador.js';
+import { di, calla, silencia, desbloquea, VOZ, vozGrabada, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_ENTRE_TURNOS, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
 import { precarga } from './ambiente.js';
 import { FASES, cartaRolHTML, ICO_VOZ, ICO_MUDO } from './partida.js';
 import { avImg } from './cuenta.js';
@@ -118,7 +118,7 @@ function entra() {
       if (s.i === 0 && s.paso === 'pasa') habla(texto('bienvenida', null, sm));
       break;
     case 'anochece':
-      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 850));
+      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), PAUSA_CIERRA_OJOS));
       break;
     case 'noche': {
       const p = pasos()[s.k];
@@ -129,14 +129,14 @@ function entra() {
           else luego(() => ir('noche', { k: s.k, paso: 'cierra' }), 3500 + Math.random() * 5000); /* el titular ha muerto: se simula la espera */
         });
       } else if (s.paso === 'cierra') {
-        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), 850));
+        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), pasos()[s.k + 1] ? PAUSA_ENTRE_TURNOS : PAUSA_AMANECER));
       }
       break;
     }
     case 'amanece': {
       const m = S.pub.muertos || [];
       habla(texto('amanece_inicio', null, sm) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sm) : m.length ? texto('amanece_muerto', null, sm) : texto('amanece_nadie', null, sm)),
-        () => luego(() => { ganador() ? ir('final') : ir('debate') }, 1200));
+        () => luego(() => { ganador() ? ir('final') : ir('debate') }, PAUSA_FRASES));
       break;
     }
     case 'debate':
@@ -149,9 +149,9 @@ function entra() {
     case 'resultado': {
       const e = S.pub.eliminado, siguiente = () => { if (ganador()) ir('final'); else { S.ronda++; ir('anochece') } };
       /* la frase acaba en suspense («…y señala a…»): el nombre aparece al terminar */
-      if (e && !s.revela) habla(texto('eliminado', null, sm), () => { S.sub.revela = true; guarda(); render(); luego(siguiente, 7000) });
-      else if (e) luego(siguiente, 7000);
-      else habla(texto(S.pub.recuento && S.pub.recuento.length ? 'empate' : 'sin_votos', null, sm), () => luego(siguiente, 1200));
+      if (e && !s.revela) habla(texto('eliminado', null, sm), () => { S.sub.revela = true; guarda(); render(); luego(siguiente, PAUSA_ELIMINADO) });
+      else if (e) luego(siguiente, PAUSA_ELIMINADO);
+      else habla(texto(S.pub.recuento && S.pub.recuento.length ? 'empate' : 'sin_votos', null, sm), () => luego(siguiente, PAUSA_FRASES));
       break;
     }
     case 'final': {
@@ -207,8 +207,7 @@ const CUERPO = {
   reparto() {
     const s = S.sub, j = S.jug[s.i];
     if (s.paso === 'pasa') return { fijo: pasa(j.n), vivo: `<button class="act" data-s="soy">Soy ${esc(j.n)}</button>${MIRA}<p class="vprog">Jugador <b>${s.i + 1}/${S.jug.length}</b></p>` };
-    const comp = S.jug.filter(x => x.rol === 'punto' && x !== j).map(x => x.n);
-    return { fijo: cartaRolHTML(j.rol, comp), vivo: `<button class="act" data-s="visto">Ya lo he visto</button><p class="tiny">Después, pasa el móvil a ${esc(S.jug[(s.i + 1) % S.jug.length].n)}${s.i + 1 === S.jug.length ? ' (o déjalo en el centro)' : ''}.</p>` };
+    return { fijo: cartaRolHTML(j.rol), vivo: `<button class="act" data-s="visto">Ya lo he visto</button><p class="tiny">Después, pasa el móvil a ${esc(S.jug[(s.i + 1) % S.jug.length].n)}${s.i + 1 === S.jug.length ? ' (o déjalo en el centro)' : ''}.</p>` };
   },
   anochece() {
     return { fijo: `<div class="phase"><p class="pt">El pueblo se duerme</p><p>Todos con los ojos cerrados. Deja el móvil en el centro.</p></div>`, vivo: '' };

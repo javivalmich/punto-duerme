@@ -109,6 +109,13 @@ export function silencia(on) {
 }
 export function calla() { VOZ.cola++; paraClip(); cancelaSiHace() }
 
+/* Pausas del narrador (ms) entre una frase y la siguiente, iguales en multimóvil y en un solo móvil. Ajustables aquí.
+   Se cuentan desde que acaba el audio (que ya lleva ~0,1-0,2 s de silencio al final); en multimóvil se suma la ida y vuelta al servidor (~0,4 s). */
+export const PAUSA_CIERRA_OJOS = 5000;   // tras «Cae la noche… todos cierran los ojos», antes de «Los Puntos despiertan»
+export const PAUSA_AMANECER = 3000;      // tras «Los Puntos vuelven a dormir», antes del amanecer
+export const PAUSA_ENTRE_TURNOS = 1200;  // entre el «vuelven a dormir» de un personaje y el «despierta» del siguiente (fase 2)
+export const PAUSA_FRASES = 400;         // resto de frases narradas encadenadas (amanecer → debate, resultado → noche…)
+export const PAUSA_ELIMINADO = 7000;     // tras «…y señala a…»: el nombre del eliminado se ve este tiempo antes de seguir
 const dura = t => Math.max(1200, t.replace(/\|/g, '').length * 62);
 
 /* Dice un texto («|» = pausa) y llama a fin() al terminar. Una llamada nueva corta la anterior. */
