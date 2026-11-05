@@ -518,3 +518,9 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 @keyframes pulso{from{opacity:.3}to{opacity:1}}
 html.fase-oscura #jAviso .pruebas{display:none}
 .silencio{text-align:center;color:var(--muted);font-size:.85rem;margin:8px 0 0}
+
+/* portada compacta: en un iPhone normal (390×844 con las barras de Safari) se ve del logo a la cuenta sin scroll */
+#s-home .wrap{padding-top:22px}
+#s-home .hero{padding-top:0}
+#s-home .hero .logo{max-height:36dvh;margin-bottom:8px}
+#s-home .lead{margin-top:12px}
