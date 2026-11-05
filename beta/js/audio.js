@@ -33,6 +33,7 @@ export function desbloquea() {
     s.onended = () => { try { s.disconnect() } catch (e) { } };
   } catch (e) { }
 }
+export const audioListo = () => !Ctor || (!!CTX && CTX.state === 'running');
 /* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
 export function reanuda() { if (CTX && CTX.state !== 'running' && CTX.state !== 'closed') CTX.resume().catch(() => { }) }
 

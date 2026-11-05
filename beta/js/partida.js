@@ -10,7 +10,7 @@ import { E, ahora, jug, nombreDe, soyAnfitrion, soyNarrador, conectado, accion, 
 import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, VOZ, duracionTexto } from './narrador.js';
+import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz } from './narrador.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
@@ -73,6 +73,7 @@ function renderAviso() {
   if (AUS.desde && Date.now() - AUS.desde > 30000 && s.fase !== 'final')
     h += `<div class="aviso">El móvil del narrador (${esc(nombreDe(n))}) no está conectado. <button class="act sec" data-a="sernarr">Ser yo el narrador</button></div>`;
   if (!me.vivo && s.fase !== 'final') h += `<div class="elimban">ESTÁS FUERA<small>Sigue la partida en silencio: ya no votas ni actúas.</small></div>`;
+  if (soyNarrador() && VOZ.bloqueada && !VOZ.mudo) h += `<div class="aviso">iOS ha bloqueado la voz. <button class="act" data-a="vozon">Activar la voz del narrador</button></div>`;
   pinta('jAviso', h + avisoPruebas());
 }
 
@@ -243,12 +244,14 @@ function menu() {
     $('mnSalir').onclick = salirSheet;
   });
 }
-function serNarrador() { accion('ser_narrador').then(() => toast('Ahora eres el narrador')).catch(e => toast(textoError(e))) }
+function serNarrador() { desbloquea(); accion('ser_narrador').then(() => toast('Ahora eres el narrador')).catch(e => toast(textoError(e))) }
 
 export const ICO_VOZ = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 export const ICO_MUDO = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 
 export function iniciaPartida() {
+  /* al activar la voz con un toque, se repite lo que tocaba decir en esta fase */
+  document.addEventListener('voz-activada', () => { DIR.k = '' });
   $('jMenu').onclick = menu;
   $('jMudo').onclick = () => { silencia(!VOZ.mudo); toast(VOZ.mudo ? 'Narrador silenciado' : 'Voz del narrador activada'); renderJuego() };
   const cuerpo = $('s-juego');
@@ -263,6 +266,7 @@ export function iniciaPartida() {
     else if (b.dataset.a === 'otra') accion('a_la_sala').catch(err);
     else if (b.dataset.a === 'salir') salirSheet();
     else if (b.dataset.a === 'sernarr') serNarrador();
+    else if (b.dataset.a === 'vozon') activaVoz();
   });
   /* Mantener pulsada la tarjeta del papel (en la partida y en «Ver mi papel») */
   const abre = on => e => { const c = e.target.closest('#rolCard'); if (!c) return; if (on) e.preventDefault(); c.classList.toggle('open', on) };
