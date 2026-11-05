@@ -118,7 +118,7 @@ function entra() {
       if (s.i === 0 && s.paso === 'pasa') habla(texto('bienvenida', null, sm));
       break;
     case 'anochece':
-      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 900));
+      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), 850));
       break;
     case 'noche': {
       const p = pasos()[s.k];
@@ -129,14 +129,14 @@ function entra() {
           else luego(() => ir('noche', { k: s.k, paso: 'cierra' }), 3500 + Math.random() * 5000); /* el titular ha muerto: se simula la espera */
         });
       } else if (s.paso === 'cierra') {
-        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), 900));
+        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), 850));
       }
       break;
     }
     case 'amanece': {
       const m = S.pub.muertos || [];
       habla(texto('amanece_inicio', null, sm) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sm) : m.length ? texto('amanece_muerto', null, sm) : texto('amanece_nadie', null, sm)),
-        () => luego(() => { ganador() ? ir('final') : ir('debate') }, 2200));
+        () => luego(() => { ganador() ? ir('final') : ir('debate') }, 1200));
       break;
     }
     case 'debate':
@@ -151,7 +151,7 @@ function entra() {
       /* la frase acaba en suspense («…y señala a…»): el nombre aparece al terminar */
       if (e && !s.revela) habla(texto('eliminado', null, sm), () => { S.sub.revela = true; guarda(); render(); luego(siguiente, 7000) });
       else if (e) luego(siguiente, 7000);
-      else habla(texto(S.pub.recuento && S.pub.recuento.length ? 'empate' : 'sin_votos', null, sm), () => luego(siguiente, 2200));
+      else habla(texto(S.pub.recuento && S.pub.recuento.length ? 'empate' : 'sin_votos', null, sm), () => luego(siguiente, 1200));
       break;
     }
     case 'final': {

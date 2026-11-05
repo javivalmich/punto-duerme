@@ -180,9 +180,9 @@ function dirige() {
   const t = textoFase(E.V), fase = s.fase, desde = s.desde;
   const sigue = () => {
     if (!NARRADAS.includes(fase)) return;
-    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'resultado' && p.eliminado ? 7000 : 900);
+    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'resultado' && p.eliminado ? 7000 : 400); /* el margen tras «…y señala a…» se mantiene; entre frases solo ~1,2 s en total contando el aviso de fin del clip (0,35 s) y la ida y vuelta al servidor */
   };
-  setTimeout(() => { if (DIR.k === k) di(t, sigue) }, 200);
+  setTimeout(() => { if (DIR.k === k) di(t, sigue) }, 100);
 }
 /* ---------- Pasar de fase cuando se acaba el tiempo ---------- */
 const AV = { k: '', t: 0 };

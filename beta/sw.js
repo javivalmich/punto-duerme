@@ -1,6 +1,6 @@
 /* Punto Duerme (beta): red primero (para recibir siempre lo último publicado) y caché como respaldo.
    Al publicar cambios, sube VERSION: el móvil descarga el sw.js nuevo y borra las cachés viejas. */
-const VERSION = '24';
+const VERSION = '25';
 const CACHE = 'punto-duerme-beta-v' + VERSION;
 const SHELL = ['./', 'index.html', 'manifest.json', 'css/estilo.css', 'js/app.js', 'js/util.js', 'js/red.js', 'js/estado.js', 'js/sala.js', 'js/partida.js',
   'js/roles.js', 'js/narrador.js', 'js/textos-narrador.js', 'js/ambiente.js', 'js/cuenta.js', 'js/cabeza.js', 'js/pruebas.js', 'js/solo.js', 'js/audio.js', 'vendor/qrcode/qrcode.js',
