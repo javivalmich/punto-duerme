@@ -44,7 +44,12 @@ export async function aseguraAudio(ms) {
 }
 export const audioListo = () => !Ctor || (!!CTX && CTX.state === 'running');
 /* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
-export function reanuda() { if (CTX && CTX.state !== 'running' && CTX.state !== 'closed') CTX.resume().catch(() => { }) }
+/* Los toques y el volver a la app SOLO reanudan el contexto si está suspendido o interrumpido, y nunca mientras suena una frase
+   (reanudarlo en mitad de la voz del navegador puede cortarla en iOS): para eso narrador.js dice si hay algo sonando. */
+let OCUPADO = () => ACTIVOS.size > 0;
+export const fijaOcupado = f => { OCUPADO = f };
+export const hayAudioSonando = () => OCUPADO();
+export function reanuda() { if (CTX && CTX.state !== 'running' && CTX.state !== 'closed' && !OCUPADO()) CTX.resume().catch(() => { }) }
 
 /* Descarga (sin decodificar) para tenerlo a mano, también sin conexión (el service worker lo sirve de su caché) */
 export function carga(url) {

@@ -3,7 +3,7 @@
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
 import { TEXTOS } from './textos-narrador.js';
-import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio } from './audio.js';
+import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio, fijaOcupado } from './audio.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0, bloqueada: false };
@@ -88,7 +88,13 @@ function reproduce(clips, vale, fin, fallo, ent) {
 }
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
+/* ¿Está sonando ahora una frase (grabada o del navegador)? */
+export const sonando = () => !!CLIP || !!(SS && (SS.speaking || SS.pending));
+fijaOcupado(() => sonando());
 export function desbloquea() {
+  /* El desbloqueo completo solo se hace en los toques de «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y
+     «Activar la voz»; si justo suena algo, no se toca nada (ni voz vacía, ni sesión, ni contexto): ya estaba desbloqueado. */
+  if (sonando()) return;
   /* frase vacía a volumen 0 dentro del toque: desbloquea la voz del navegador para las frases que lleguen después por la red.
      Primero la voz y después Web Audio: así el arranque de la voz no deja el contexto de audio «interrumpido» en iOS */
   if (SS) { try { const u = new SpeechSynthesisUtterance('.'); u.volume = 0; u.lang = 'es-ES'; SS.speak(u) } catch (e) { } VOZ.bloqueada = false }

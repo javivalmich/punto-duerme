@@ -88,6 +88,8 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 
 En el modo de un solo móvil, cada votante tiene también «No votar» en su voto secreto (`S.votos[i] = -1`).
 
+**Los toques no cortan la voz**: el desbloqueo completo (`desbloquea()`: voz vacía, contexto, `audioSession`) solo se hace en «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y «Activar la voz», y se salta si hay una frase sonando (`sonando()` en `narrador.js`). Cualquier otro toque (y volver a la app) solo llama a `reanuda()`, que reanuda el `AudioContext` si está suspendido o interrumpido y **nunca mientras suena una frase**; no para, cancela ni recrea nada.
+
 ## Voz y bloqueo de iOS
 
 iOS solo deja hablar si la voz arrancó dentro de un toque. Por eso «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y empezar un solo móvil llaman a `desbloquea()` (narrador.js) **antes de ir al servidor**: `speak()` de una frase vacía a volumen 0 + `AudioContext` (audio.js). Además: no se llama a `speechSynthesis.cancel()` si no hay nada hablando, y si hace falta se espera 150 ms antes de hablar (en iOS, hablar justo después de `cancel()` deja la voz muda). Si la voz no empieza en 2,5 s (o el `AudioContext` está interrumpido), `VOZ.bloqueada = true` y el móvil del narrador ve el aviso «iOS ha bloqueado la voz» con el botón **«Activar la voz del narrador»**, que la desbloquea con un toque y repite lo que tocaba decir.
