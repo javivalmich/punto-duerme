@@ -6,6 +6,7 @@
 import { $, esc, sheet, closeSheet, toast } from './util.js';
 import { E, accion, soyAnfitrion } from './estado.js';
 import { rpc, textoError } from './red.js';
+import { diagVoz } from './narrador.js';
 
 export const EN_BETA = /\/beta\//.test(location.pathname);
 export const hayPruebas = () => !!(EN_BETA && E.V && soyAnfitrion() && E.V.sala.pruebas && E.V.sala.pruebas.permitido);
@@ -23,20 +24,39 @@ function panelHTML(V, enSala) {
     <div class="row"><div><div class="lbl">Los bots votan a</div><div class="sub">De día, en la votación</div></div><select class="field sel" data-pr="forzar_voto" aria-label="Los bots votan a">${opts(p.forzar_voto)}</select></div>
     ${enSala ? '<button class="act sec" data-pr-quitar>Quitar todos los bots</button>' : ''}`;
 }
+/* Estado de la voz (solo beta): versión de la app, audios del índice, contexto de audio y qué ha sonado en cada frase */
+async function vozHTML() {
+  const d = diagVoz(); let vers = '?', rem = '?';
+  try { vers = (await caches.keys()).map(k => k.replace('punto-duerme-beta-v', 'v')).join(', ') || 'sin caché' } catch (e) { }
+  try { const r = await fetch('audio/voz/indice.json', { cache: 'no-store' }); rem = (await r.json()).length } catch (e) { rem = 'error' }
+  const via = { grabada: '🎙 grabada', navegador: '🗣 navegador', error: '⚠ error', silencio: '🔇 silencio' };
+  return `<div class="vozdiag"><div class="lbl">Estado de la voz</div>
+    <div class="sub">App ${esc(vers)} · audios en el índice: ${d.indice == null ? 'sin cargar' : d.indice} (en la red: ${rem})</div>
+    <div class="sub">AudioContext: <b>${esc(d.ctx)}</b> · sesión de audio: ${esc(d.sesion)} · ${d.mudo ? 'silenciado' : 'con sonido'}${d.bloqueada ? ' · voz bloqueada' : ''}</div>
+    <div class="sub">Voz del navegador: ${esc(d.voz)}</div>
+    ${d.hist.length ? `<div class="sub">${d.hist.map(esc).join('<br>')}</div>` : ''}
+    <div class="lbl" style="margin-top:8px">Últimas frases</div>
+    ${d.log.length ? d.log.map(l => `<div class="sub">${esc(l.t)} ${via[l.via] || l.via}: «${esc(l.txt)}»${l.extra ? '<br>&nbsp;&nbsp;' + esc(l.extra) : ''}</div>`).join('') : '<div class="sub">Aún no ha hablado el narrador en este móvil.</div>'}</div>`;
+}
+function pintaVoz(el) {
+  if (!el) return;
+  const va = async () => { if (!el.isConnected) return clearInterval(el._iv); const h = await vozHTML(); if (el._h !== h) { el._h = h; el.innerHTML = h } };
+  clearInterval(el._iv); va(); el._iv = setInterval(va, 2000);
+}
 const pinta = (el, html) => { if (el._h !== html) { el._h = html; el.innerHTML = html } };
 
 /* Sala de espera: botón «Añadir bot» y panel plegable (solo anfitrión, solo beta) */
 export function renderPruebasSala() {
   const ok = hayPruebas();
-  $('saBot').hidden = !ok; $('saPruebasBox').hidden = !ok;
-  if (ok) pinta($('saPruebas'), panelHTML(E.V, true));
+  $('saBot').hidden = !ok; $('saPruebasBox').hidden = !EN_BETA;
+  if (EN_BETA) { pinta($('saPruebas'), ok ? panelHTML(E.V, true) : ''); if (!$('saVoz')._iv) pintaVoz($('saVoz')) }
 }
 
 /* Durante la partida: hoja con el mismo panel (menú ☰ → «Panel de pruebas») */
 export function abrePanelPruebas() {
-  if (!hayPruebas()) return;
-  sheet(`<div class="menuhead"><h3>Panel de pruebas</h3><button class="xbtn" id="prX" aria-label="Cerrar">✕</button></div><div id="prCuerpo"></div>`, () => {
-    $('prX').onclick = closeSheet; pinta($('prCuerpo'), panelHTML(E.V, false)); manejar($('prCuerpo'));
+  if (!EN_BETA) return;
+  sheet(`<div class="menuhead"><h3>Panel de pruebas</h3><button class="xbtn" id="prX" aria-label="Cerrar">✕</button></div><div id="prCuerpo"></div><div id="prVoz"></div>`, () => {
+    $('prX').onclick = closeSheet; if (hayPruebas()) pinta($('prCuerpo'), panelHTML(E.V, false)); manejar($('prCuerpo')); pintaVoz($('prVoz'));
   });
 }
 

@@ -360,7 +360,7 @@ body.ed-on{overflow:hidden}
 .sheet .ok:empty{display:none}
 
 /* ==================== Punto Duerme ==================== */
-#betaTag{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:8px;z-index:90;background:var(--red);color:#fff;font-weight:900;font-size:.68rem;letter-spacing:.12em;padding:3px 8px;border-radius:6px;pointer-events:none}
+#betaTag{position:absolute;top:calc(6px + env(safe-area-inset-top,0px));left:8px;z-index:90;background:var(--red);color:#fff;font-weight:900;font-size:.68rem;letter-spacing:.12em;padding:3px 8px;border-radius:6px;pointer-events:none}
 .field{display:block}
 .row .val{font-weight:900;font-size:1.1rem;white-space:nowrap}
 .step output{min-width:4.2ch;font-size:1.25rem}
@@ -524,3 +524,29 @@ html.fase-oscura #jAviso .pruebas{display:none}
 #s-home .hero{padding-top:0}
 #s-home .hero .logo{max-height:36dvh;margin-bottom:8px}
 #s-home .lead{margin-top:12px}
+
+/* BETA va con el contenido (ya no se queda fija encima de «Volver» al hacer scroll) */
+#betaTag{position:absolute}
+/* pantallas de partida nueva, unirme y un solo móvil: compactas para verse hasta el botón en un iPhone (390×664 útiles) sin scroll */
+#s-crear .wrap,#s-unir .wrap,#s-solo-cfg .wrap{padding-top:34px;padding-bottom:16px}
+#s-crear .back,#s-unir .back,#s-solo-cfg .back{padding:2px 0}
+#s-crear h2,#s-unir h2,#s-solo-cfg h2{font-size:1.7rem;margin:2px 0 2px}
+#s-crear .hint-line,#s-unir .hint-line,#s-solo-cfg .hint-line{font-size:.88rem;line-height:1.35;margin:2px 0 8px}
+#s-crear .panel,#s-unir .panel,#s-solo-cfg .panel{margin:8px 0;padding:2px 16px}
+#s-crear .row,#s-solo-cfg .row{padding:7px 0}
+#s-crear .field,#s-unir .field{margin-top:4px;padding:10px 14px}
+#s-crear .err,#s-unir .err,#s-solo-cfg .err{margin-top:4px;min-height:1.2em}
+#s-solo-cfg .cathead{padding-top:8px;margin-bottom:4px}
+#s-solo-cfg .addrow{padding:6px 0 6px}
+#s-solo-cfg .names{padding-bottom:8px;gap:6px}
+#s-solo-cfg .hostnote{margin:6px 0 0}
+#s-solo-cfg .silencio{margin:4px 0 0}
+#s-unir input.codein{padding:10px}
+.vozdiag{padding:10px 0;font-size:.85rem}
+.vozdiag .sub{font-size:.8rem;line-height:1.35;overflow-wrap:anywhere}
+
+#s-crear .row .sub,#s-solo-cfg .row .sub{font-size:.76rem;line-height:1.2;margin-top:0}
+#s-crear .row .lbl,#s-solo-cfg .row .lbl{font-size:1rem;line-height:1.25}
+#s-solo-cfg .names .nm{padding:3px 4px 3px 12px;font-size:.95rem}
+#s-solo-cfg .names .nm button{width:26px;height:26px}
+#s-solo-cfg .addrow input{padding:9px 14px}

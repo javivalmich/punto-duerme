@@ -3,7 +3,7 @@
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
 import { TEXTOS } from './textos-narrador.js';
-import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda } from './audio.js';
+import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio } from './audio.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0, bloqueada: false };
@@ -46,6 +46,16 @@ FRASES.sort((a, b) => b.t.length - a.t.length);
 let DURS = {};
 fetch('audio/voz/duraciones.json').then(r => r.ok ? r.json() : {}).then(d => { DURS = d }).catch(() => { });
 fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
+/* Para el panel de pruebas: qué ha sonado en cada frase (grabada, navegador o error) */
+export const DIAG = { log: [] };
+const nota = (texto, via, extra) => { DIAG.log.unshift({ t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '' }); DIAG.log.length = Math.min(DIAG.log.length, 8) };
+export const diagVoz = () => ({ indice: INDICE ? INDICE.size : null, ...estadoAudio(), mudo: VOZ.mudo, bloqueada: VOZ.bloqueada, voz: VOZ.voz ? VOZ.voz.name : 'ninguna', log: DIAG.log });
+function faltaDe(texto) {
+  if (!INDICE) return 'índice sin cargar';
+  let r = String(texto || '').trim();
+  while (r) { const f = FRASES.find(x => r.startsWith(x.t) && INDICE.has(x.clip)); if (!f) return 'sin audio para «' + r.slice(0, 28) + '…»'; r = r.slice(f.t.length).replace(/^\s*\|\s*/, '') }
+  return '';
+}
 function clipsDe(texto) {
   if (!INDICE) return null;
   let r = String(texto || '').trim(); const out = [];
@@ -59,7 +69,7 @@ const urlClip = c => 'audio/voz/' + c + '.mp3';
 export function precargaVoz() { if (INDICE) INDICE.forEach(c => carga(urlClip(c)).catch(() => { })); else setTimeout(precargaVoz, 1500) }
 const paraClip = () => { if (CLIP) { CLIP.parar(); CLIP = null } };
 /* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo) */
-function reproduce(clips, vale, fin, fallo) {
+function reproduce(clips, vale, fin, fallo, texto) {
   let i = 0;
   const sig = async () => {
     if (!vale()) return;
@@ -67,20 +77,22 @@ function reproduce(clips, vale, fin, fallo) {
     try {
       const buf = await decodifica(urlClip(clips[i++]), false);
       if (!vale()) return;
+      await aseguraAudio(1200);
+      if (!vale()) return;
       CLIP = suenaBuffer(buf, () => { CLIP = null; setTimeout(sig, 350) });
-      setTimeout(() => { if (vale() && !audioListo() && !document.hidden) marcaBloqueo(true) }, 1500); /* contexto de audio interrumpido por iOS */
-    } catch (e) { if (vale()) fallo() }
+      if (i === 1) nota(texto, 'grabada', clips.join(' + ') + ' · contexto ' + estadoAudio().ctx);
+      setTimeout(() => { if (vale() && !audioListo() && !document.hidden) { marcaBloqueo(true); nota(texto, 'error', 'contexto de audio ' + estadoAudio().ctx + ' tras 1,5 s: no se oye') } }, 1500); /* contexto de audio interrumpido por iOS */
+    } catch (e) { nota(texto, 'error', (clips[i - 1] || '') + ': ' + (e && (e.name + ' ' + e.message) || e)); if (vale()) fallo() }
   };
   sig();
 }
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
 export function desbloquea() {
+  /* frase vacía a volumen 0 dentro del toque: desbloquea la voz del navegador para las frases que lleguen después por la red.
+     Primero la voz y después Web Audio: así el arranque de la voz no deja el contexto de audio «interrumpido» en iOS */
+  if (SS) { try { const u = new SpeechSynthesisUtterance('.'); u.volume = 0; u.lang = 'es-ES'; SS.speak(u) } catch (e) { } VOZ.bloqueada = false }
   desbloqueaWA();
-  if (!SS) return;
-  /* frase vacía a volumen 0 dentro del toque: desbloquea la voz del navegador para las frases que lleguen después por la red */
-  try { const u = new SpeechSynthesisUtterance('.'); u.volume = 0; u.lang = 'es-ES'; SS.speak(u) } catch (e) { }
-  VOZ.bloqueada = false;
 }
 /* Botón «Activar la voz del narrador» (hay que llamarlo desde un toque) */
 export function activaVoz() { desbloquea(); document.dispatchEvent(new Event('voz-activada')); document.dispatchEvent(new Event('repinta')) }
@@ -106,9 +118,10 @@ export function di(texto, fin) {
   if (clips && clips.length) {
     clearTimeout(respaldo); const r2 = setTimeout(acaba, 90000);
     cancelaSiHace();
-    reproduce(clips, () => yo === VOZ.cola, () => { clearTimeout(r2); acaba() }, () => { clearTimeout(r2); setTimeout(acaba, dura(texto) * 1.8 + 3000); hablaNavegador() });
+    reproduce(clips, () => yo === VOZ.cola, () => { clearTimeout(r2); acaba() }, () => { clearTimeout(r2); setTimeout(acaba, dura(texto) * 1.8 + 3000); nota(texto, 'navegador', 'tras el error'); hablaNavegador() }, texto);
     return;
   }
+  nota(texto, VOZ.mudo ? 'silencio' : 'navegador', VOZ.mudo ? 'narrador silenciado' : faltaDe(texto));
   hablaNavegador();
   function hablaNavegador() {
   if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { clearTimeout(respaldo); setTimeout(acaba, dura(texto)); return }

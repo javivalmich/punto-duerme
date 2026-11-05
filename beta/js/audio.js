@@ -27,11 +27,20 @@ export function desbloquea() {
   limpiaMediaSession(); tipoSesion('playback');
   if (!Ctor) return;
   try {
-    if (!CTX || CTX.state === 'closed') CTX = new Ctor();
+    if (!CTX || CTX.state === 'closed') { CTX = new Ctor(); marca('contexto creado: ' + CTX.state); CTX.onstatechange = () => marca('estado → ' + (CTX && CTX.state)) }
     if (CTX.state !== 'running') CTX.resume().catch(() => { });
     const b = CTX.createBuffer(1, 1, 22050), s = CTX.createBufferSource(); s.buffer = b; s.connect(CTX.destination); s.start(0);
     s.onended = () => { try { s.disconnect() } catch (e) { } };
   } catch (e) { }
+}
+/* Para el panel de pruebas: estado del contexto y de la sesión de audio de iOS, y los últimos cambios de estado */
+const HIST = [];
+const marca = t => { HIST.push(((performance.now() / 1000) | 0) + ' s: ' + t); if (HIST.length > 8) HIST.shift() };
+export const estadoAudio = () => ({ ctx: !Ctor ? 'sin Web Audio' : CTX ? CTX.state : 'sin crear', sesion: navigator.audioSession ? navigator.audioSession.type : 'no soportada', hist: HIST.slice() });
+/* Antes de cada clip: si iOS lo ha suspendido o interrumpido, intenta reanudarlo (espera como mucho `ms`) */
+export async function aseguraAudio(ms) {
+  if (!CTX || CTX.state === 'running' || CTX.state === 'closed') return;
+  try { await Promise.race([CTX.resume(), new Promise(r => setTimeout(r, ms || 1200))]) } catch (e) { marca('resume falló: ' + (e && e.message || e)) }
 }
 export const audioListo = () => !Ctor || (!!CTX && CTX.state === 'running');
 /* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
@@ -45,7 +54,7 @@ export function carga(url) {
 const DECOD = new Map();     // url -> Promise<AudioBuffer> (solo los efectos cortos se guardan decodificados)
 export async function decodifica(url, guardar) {
   if (!Ctor) throw new Error('sin Web Audio');
-  if (!CTX || CTX.state === 'closed') CTX = new Ctor();
+  if (!CTX || CTX.state === 'closed') { CTX = new Ctor(); marca('contexto creado fuera de un toque: ' + CTX.state); CTX.onstatechange = () => marca('estado → ' + (CTX && CTX.state)) }
   if (guardar && DECOD.has(url)) return DECOD.get(url);
   const p = carga(url).then(ab => new Promise((ok, ko) => { const c = CTX; c.decodeAudioData(ab.slice(0), ok, ko) }));
   if (guardar) DECOD.set(url, p.catch(e => { DECOD.delete(url); throw e }));
@@ -70,7 +79,7 @@ export function paraTodo() { for (const h of [...ACTIVOS]) h.parar() }
 /* Libera el audio por completo (al salir de la partida o cerrar la página): para, cierra el contexto y limpia la sesión multimedia */
 export function liberaAudio() {
   paraTodo(); DECOD.clear();
-  const c = CTX; CTX = null;
+  const c = CTX; CTX = null; if (c) marca('contexto cerrado (se sale de la partida o se oculta la página)');
   if (c && c.state !== 'closed') { try { c.close().catch(() => { }) } catch (e) { } }
   limpiaMediaSession(); tipoSesion('auto');
 }

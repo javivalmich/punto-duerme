@@ -11,7 +11,7 @@ import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
 import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz } from './narrador.js';
-import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas } from './pruebas.js';
+import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas, EN_BETA } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
 const NARRADAS = ['anochece', 'noche_cierra', 'amanece', 'resultado'];
@@ -227,7 +227,7 @@ function menu() {
   sheet(`<div class="menuhead"><h3>Partida ${esc(s.codigo)}</h3><button class="xbtn" id="mnX" aria-label="Cerrar">✕</button></div>
     ${me.rol && enJuego ? '<button class="menuitem" id="mnRol">Ver mi papel</button>' : ''}
     ${soyNarrador() ? `<button class="menuitem" id="mnMudo">${VOZ.mudo ? 'Activar la voz del narrador' : 'Silenciar al narrador'}</button>` : '<button class="menuitem" id="mnNarr">Ser yo el narrador</button>'}
-    ${hayPruebas() ? '<button class="menuitem" id="mnPru">Panel de pruebas</button>' : ''}
+    ${EN_BETA ? '<button class="menuitem" id="mnPru">Panel de pruebas</button>' : ''}
     <button class="menuitem" id="mnComo">Cómo se juega</button>
     <div class="menusep">${soyAnfitrion() && enJuego ? '<button class="menuitem danger" id="mnFin">Terminar la partida</button>' : ''}<button class="menuitem exit" id="mnSalir">Salir de la partida</button></div>`, () => {
     $('mnX').onclick = closeSheet;
