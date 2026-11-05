@@ -2,11 +2,13 @@
 
 Uso:   python scripts/voz.py                      genera lo que falta (continúa donde se quedó si se corta)
        python scripts/voz.py --regenerar id-n ... vuelve a generar esas frases aunque existan
+       python scripts/voz.py --plan               enseña el orden de las tandas sin gastar cupo
        python scripts/voz.py --lista              solo escribe scripts/voz-lista.md (id, entonación, duración, texto)
 Necesita: pip install google-genai lameenc numpy scipy pyloudnorm  ·  GEMINI_API_KEY en el .env de la raíz (nunca en el repo).
 
 Cómo funciona (todo configurable en scripts/voz-config.json):
- - Agrupa hasta `lote_max` frases de la MISMA entonación en una sola petición, separadas por párrafos con pausas largas.
+ - Orden por prioridad (ver «orden de generación») y tandas de 4 frases como máximo (`LOTE_FASE`); indice.json se publica tras cada tanda.
+ - Agrupa hasta 4 frases de la MISMA entonación en una sola petición, separadas por párrafos con pausas largas.
  - Corta el audio por los silencios: exige tantos trozos como frases y duraciones razonables; si no cuadra, repite solo ese lote.
  - Paso fijo de masterizado de CADA audio (también los futuros): compresión suave → loudness objetivo (-14 LUFS) → limitador de picos.
  - Respeta el límite gratuito (`peticiones_por_dia`, contadas en scripts/.voz-estado.json) y para limpiamente al agotarlo.
@@ -54,8 +56,34 @@ def peticiones_hoy():
     except Exception: e = {}
     return e.get('n', 0) if e.get('dia') == hoy else 0
 
+def estado():
+    try: return json.load(open(ESTADO))
+    except Exception: return {}
+
 def cuenta_peticion():
-    json.dump({'dia': datetime.date.today().isoformat(), 'n': peticiones_hoy() + 1}, open(ESTADO, 'w'))
+    json.dump({**estado(), 'dia': datetime.date.today().isoformat(), 'n': peticiones_hoy() + 1}, open(ESTADO, 'w'))
+
+def marca_rehecha(id_):
+    e = estado(); e['rehechas'] = sorted(set(e.get('rehechas', [])) | {id_}); json.dump(e, open(ESTADO, 'w'))
+
+
+# ---------- orden de generación (por prioridad; el cupo diario es corto) ----------
+# 1) una variante de cada frase de la fase 1 que no tiene ninguna  2) segundas variantes de las que solo tienen una
+# 3) el resto de variantes  4) fase 2 (cupido, vidente, bruja, amantes) y las sospechosas de estar mal cortadas
+SIN_NINGUNA = ['bienvenida', 'amanece_inicio', 'amanece_nadie', 'debate', 'gana_pueblo', 'gana_puntos']
+SEGUNDA = ['puntos_abre', 'puntos_cierra', 'sin_votos']
+FASE2 = ('cupido_', 'vidente_', 'bruja_', 'amantes_', 'gana_amantes')
+SOSPECHOSAS = ['amanece_muerto-3', 'amanece_varios-2', 'eliminado-1', 'votacion-2']
+LOTE_FASE = 4   # frases por petición como máximo
+
+def prioridad(f, existen, explicitas):
+    b = f['base']
+    if f['id'] in explicitas: return 0
+    if f['id'] in SOSPECHOSAS or b.startswith(FASE2): return 4
+    n = sum(1 for e in existen if e.rsplit('-', 1)[0] == b)
+    if b in SIN_NINGUNA and n == 0 and f['id'] == b + '-1': return 1
+    if b in SEGUNDA and n == 1 and f['id'] == b + '-2': return 2
+    return 3
 
 
 # ---------- audio ----------
@@ -178,15 +206,23 @@ def main():
     ids_validos = {f['id'] for f in todas}
     for id_ in archivos():
         if id_ not in ids_validos: os.remove(os.path.join(DESTINO, id_ + '.mp3')); print('borrado (ya no existe la frase):', id_)
-    pend = [f for f in todas if f['id'] in regen or not os.path.exists(os.path.join(DESTINO, f['id'] + '.mp3'))]
+    rehechas = set(estado().get('rehechas', []))
+    pend = [f for f in todas if f['id'] in regen or not os.path.exists(os.path.join(DESTINO, f['id'] + '.mp3'))
+            or (f['id'] in SOSPECHOSAS and f['id'] not in rehechas)]
     print(f'{len(pend)} audios por generar de {len(todas)}; peticiones de hoy: {peticiones_hoy()}/{CFG["peticiones_por_dia"]}')
     if not pend: escribe_indice(todas); escribe_lista(todas); return print('Nada que hacer.')
-    cli = genai.Client(api_key=clave())
+    cli = None if '--plan' in a else genai.Client(api_key=clave())
+    existen = set(archivos())
+    pend.sort(key=lambda f: prioridad(f, existen, regen))
     lotes = []
-    for tono in ('hushed', 'tense', 'rich'):
-        p = [f for f in pend if f['tono'] == tono]
-        k = -(-len(p) // CFG['lote_max']) if p else 0           # reparte parejo: p. ej. 15 → 8+7, 17 → 6+6+5
-        for i in range(k): lotes.append((tono, p[i::k]))
+    for pr in sorted({prioridad(f, existen, regen) for f in pend}):
+        for tono in ('hushed', 'tense', 'rich'):
+            p = [f for f in pend if f['tono'] == tono and prioridad(f, existen, regen) == pr]
+            k = -(-len(p) // LOTE_FASE) if p else 0              # tandas de 4 como máximo, repartidas parejo (6 → 3+3)
+            for i in range(k): lotes.append((tono, p[i * len(p) // k:(i + 1) * len(p) // k]))
+    if '--plan' in a:
+        for i, (tono, lote) in enumerate(lotes, 1): print(i, tono, [f['id'] for f in lote])
+        return
     for tono, lote in lotes:
         for intento in range(3):
             if peticiones_hoy() >= CFG['peticiones_por_dia']:
@@ -208,6 +244,7 @@ def main():
             for f, tr in zip(lote, trozos):
                 open(os.path.join(DESTINO, f['id'] + '.mp3'), 'wb').write(a_mp3(masteriza(tr, rate), rate))
                 print(f"  {f['id']} ({tono}) {len(tr) / rate:.1f} s", flush=True)
+                if f['id'] in SOSPECHOSAS: marca_rehecha(f['id'])
             break
         else:
             print(f'  me salto este lote ({tono}): {[f["id"] for f in lote]}')

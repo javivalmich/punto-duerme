@@ -8,11 +8,11 @@
     "hushed": "Style: Low, mysterious, suspenseful night-time narration, spoken softly but clearly projected so a whole room can hear it. Slow, with dramatic pauses.",
     "tense": "Style: Tense, grave, suspenseful narration. Low, tight voice with dramatic pauses before the key words."
   },
-  "instruccion_lote": "Entre cada párrafo haz una pausa larga de unos tres segundos, y lee cada párrafo con la misma voz y el mismo tono.",
-  "lote_max": 8,
+  "instruccion_lote": "Entre cada párrafo haz una pausa larga de unos cinco segundos, y lee cada párrafo con la misma voz y el mismo tono.",
+  "lote_max": 4,
   "peticiones_por_dia": 10,
   "loudness_lufs": -14,
   "techo_pico_db": -1.0,
   "bitrate_kbps": 96,
-  "segundos_entre_llamadas": 15
+  "segundos_entre_llamadas": 20
 }
