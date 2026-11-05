@@ -4,7 +4,7 @@
    - El panel permite ver los papeles de los bots y forzar a quién marcan o votan.
    El servidor lo desactiva con: update duerme_flags set valor = false where clave = 'pruebas';  (ver CLAUDE.md). */
 import { $, esc, sheet, closeSheet, toast } from './util.js';
-import { E, accion, soyAnfitrion } from './estado.js';
+import { E, accion, soyAnfitrion, soyNarrador, nombreDe } from './estado.js';
 import { rpc, textoError } from './red.js';
 import { diagVoz } from './narrador.js';
 
@@ -32,6 +32,7 @@ async function vozHTML() {
   const via = { grabada: '🎙 grabada', navegador: '🗣 navegador', error: '⚠ error', silencio: '🔇 silencio' };
   return `<div class="vozdiag"><div class="lbl">Estado de la voz</div>
     <div class="sub">App ${esc(vers)} · audios en el índice: ${d.indice == null ? 'sin cargar' : d.indice} (en la red: ${rem})</div>
+    <div class="sub">Este móvil es el narrador: <b>${E.V ? (soyNarrador() ? 'sí' : 'no') : '—'}</b>${E.V && E.V.sala.narrador ? ' (narrador: ' + esc(nombreDe(E.V.sala.narrador)) + ')' : ''}${E.V && soyAnfitrion() ? ' · anfitrión' : ''}</div>
     <div class="sub">AudioContext: <b>${esc(d.ctx)}</b> · sesión de audio: ${esc(d.sesion)} · ${d.mudo ? 'silenciado' : 'con sonido'}${d.bloqueada ? ' · voz bloqueada' : ''}</div>
     <div class="sub">Voz del navegador: ${esc(d.voz)}</div>
     ${d.hist.length ? `<div class="sub">${d.hist.map(esc).join('<br>')}</div>` : ''}

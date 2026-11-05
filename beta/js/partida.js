@@ -181,7 +181,7 @@ function dirige() {
     if (!NARRADAS.includes(fase)) return;
     setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'resultado' && p.eliminado ? 7000 : 900);
   };
-  setTimeout(() => { if (DIR.k === k) di(t, sigue) }, son ? 900 : 200);
+  setTimeout(() => { if (DIR.k === k) di(t, sigue) }, 200);
 }
 /* ---------- Pasar de fase cuando se acaba el tiempo ---------- */
 const AV = { k: '', t: 0 };
