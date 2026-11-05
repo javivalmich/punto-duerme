@@ -88,6 +88,8 @@ Para añadir un personaje: entrada en `roles.js`, su reparto y su paso de noche 
 
 En el modo de un solo móvil, cada votante tiene también «No votar» en su voto secreto (`S.votos[i] = -1`).
 
+**Voz que no se queda muda en rondas posteriores** (`narrador.js`): `sonando()` ya no usa `speechSynthesis.speaking/pending` (en iOS pueden quedarse en `true` para siempre tras un `cancel()` y entonces se bloqueaban el desbloqueo, `reanuda()` y el botón «Activar la voz»): usa un estado propio (`HABLA_HASTA`, que se limpia en `onend`/`onerror`/cancelación y caduca solo). Si el `AudioContext` no está `running` tras intentar reanudarlo, o su reloj (`relojAudio()`) no avanza a los 0,7 s de arrancar un clip, se avisa («Activar la voz») y habla la voz del navegador en vez de «reproducir» en silencio; si la voz del navegador no arranca en 2,5 s se vacía la cola y se reintenta una vez. El panel guarda las últimas 40 frases, con la causa de cada fallo. Probado con 4 rondas completas en los dos modos tocando la pantalla cada 0,6 s: 27 frases, sin errores.
+
 **Los toques no cortan la voz**: el desbloqueo completo (`desbloquea()`: voz vacía, contexto, `audioSession`) solo se hace en «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y «Activar la voz», y se salta si hay una frase sonando (`sonando()` en `narrador.js`). Cualquier otro toque (y volver a la app) solo llama a `reanuda()`, que reanuda el `AudioContext` si está suspendido o interrumpido y **nunca mientras suena una frase**; no para, cancela ni recrea nada.
 
 ## Voz y bloqueo de iOS

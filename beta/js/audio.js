@@ -42,6 +42,8 @@ export async function aseguraAudio(ms) {
   if (!CTX || CTX.state === 'running' || CTX.state === 'closed') return;
   try { await Promise.race([CTX.resume(), new Promise(r => setTimeout(r, ms || 1200))]) } catch (e) { marca('resume falló: ' + (e && e.message || e)) }
 }
+/* Segundos que ha avanzado el reloj del contexto (si no avanza, aunque diga «running», no está sonando nada) */
+export const relojAudio = () => CTX ? CTX.currentTime : -1;
 export const audioListo = () => !Ctor || (!!CTX && CTX.state === 'running');
 /* Si iOS lo interrumpió (llamada, bloqueo…), se reanuda en el siguiente toque */
 /* Los toques y el volver a la app SOLO reanudan el contexto si está suspendido o interrumpido, y nunca mientras suena una frase

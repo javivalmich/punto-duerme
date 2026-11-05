@@ -3,7 +3,7 @@
    se espera lo que tardaría en decirlo, para que el ritmo de la partida sea el mismo. */
 import { lsGet, lsSet } from './util.js';
 import { TEXTOS } from './textos-narrador.js';
-import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio, fijaOcupado } from './audio.js';
+import { desbloquea as desbloqueaWA, carga, decodifica, reproduce as suenaBuffer, audioListo, reanuda, aseguraAudio, estadoAudio, fijaOcupado, relojAudio } from './audio.js';
 
 const SS = window.speechSynthesis || null;
 export const VOZ = { mudo: !!lsGet('mudo', false), voz: null, cola: 0, bloqueada: false };
@@ -48,7 +48,11 @@ fetch('audio/voz/duraciones.json').then(r => r.ok ? r.json() : {}).then(d => { D
 fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
 /* Para el panel de pruebas: qué ha sonado en cada frase (grabada, navegador o error) */
 export const DIAG = { log: [] };
-const nota = (texto, via, extra) => { const e = { t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '', fin: '' }; DIAG.log.unshift(e); DIAG.log.length = Math.min(DIAG.log.length, 8); return e };
+/* Estado PROPIO de la voz del navegador: en iOS `speechSynthesis.speaking` puede quedarse en true para siempre tras un cancel(),
+   y si se usara para decidir si «hay algo sonando» se bloquearían el desbloqueo, la reanudación del audio y el botón «Activar la voz». */
+let HABLA_HASTA = 0;
+const hablando = () => Date.now() < HABLA_HASTA;
+const nota = (texto, via, extra) => { const e = { t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '', fin: '' }; DIAG.log.unshift(e); DIAG.log.length = Math.min(DIAG.log.length, 40); return e };
 export const diagVoz = () => ({ indice: INDICE ? INDICE.size : null, ...estadoAudio(), mudo: VOZ.mudo, bloqueada: VOZ.bloqueada, voz: VOZ.voz ? VOZ.voz.name : 'ninguna', log: DIAG.log });
 function faltaDe(texto) {
   if (!INDICE) return 'índice sin cargar';
@@ -79,7 +83,12 @@ function reproduce(clips, vale, fin, fallo, ent) {
       if (!vale()) return;
       await aseguraAudio(1200);
       if (!vale()) return;
-      CLIP = suenaBuffer(buf, () => { CLIP = null; setTimeout(sig, 350) });
+      /* contexto suspendido/interrumpido y sin forma de reanudarlo (iOS lo exige con un toque): antes se «reproducía» en silencio y
+         la partida seguía muda; ahora se avisa y habla la voz del navegador */
+      if (!audioListo()) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ': no se puede reanudar, voz del navegador'; return fallo() }
+      const t0a = relojAudio(), mio = CLIP = suenaBuffer(buf, () => { if (CLIP === mio) CLIP = null; setTimeout(sig, 350) });
+      /* vigilante: si a los 0,7 s el reloj del contexto no ha avanzado, no está sonando nada */
+      setTimeout(() => { if (vale() && CLIP === mio && relojAudio() - t0a < 0.2 && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ el reloj del audio está parado (no se oye); voz del navegador'; paraClip(); fallo() } }, 700);
       if (i === 1) ent.extra += ' · contexto ' + estadoAudio().ctx;
       setTimeout(() => { if (vale() && !audioListo() && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ' tras 1,5 s: no se oye' } }, 1500); /* contexto de audio interrumpido por iOS */
     } catch (e) { ent.extra += ' · ⚠ ' + (clips[i - 1] || '') + ': ' + (e && (e.name + ' ' + e.message) || e); if (vale()) fallo() }
@@ -89,7 +98,7 @@ function reproduce(clips, vale, fin, fallo, ent) {
 
 /* iOS y algunos Android solo dejan hablar después de un toque: se llama desde «Empezar» o «Volver a la partida» */
 /* ¿Está sonando ahora una frase (grabada o del navegador)? */
-export const sonando = () => !!CLIP || !!(SS && (SS.speaking || SS.pending));
+export const sonando = () => !!CLIP || hablando();
 fijaOcupado(() => sonando());
 export function desbloquea() {
   /* El desbloqueo completo solo se hace en los toques de «Crear», «Unirme», «Empezar», «Volver a la partida», «Ser yo el narrador» y
@@ -102,7 +111,7 @@ export function desbloquea() {
 }
 /* Botón «Activar la voz del narrador» (hay que llamarlo desde un toque) */
 export function activaVoz() { desbloquea(); document.dispatchEvent(new Event('voz-activada')); document.dispatchEvent(new Event('repinta')) }
-const cancelaSiHace = () => { try { if (SS && (SS.speaking || SS.pending)) SS.cancel() } catch (e) { } };
+const cancelaSiHace = () => { HABLA_HASTA = 0; try { if (SS && (SS.speaking || SS.pending)) SS.cancel() } catch (e) { } };
 export function silencia(on) {
   VOZ.mudo = !!on; lsSet('mudo', VOZ.mudo);
   if (VOZ.mudo) { paraClip(); if (SS) try { SS.cancel() } catch (e) { } }
@@ -156,11 +165,18 @@ export function di(texto, fin) {
     if (i >= trozos.length) return fin2();
     const u = new SpeechSynthesisUtterance(trozos[i++]);
     u.lang = 'es-ES'; if (VOZ.voz) u.voice = VOZ.voz; u.rate = .95; u.pitch = .9;
-    const vig = setTimeout(() => { if (!document.hidden && yo === VOZ.cola) marcaBloqueo(true) }, 2500);
-    u.onstart = () => { clearTimeout(vig); marcaBloqueo(false) };
-    u.onend = () => { clearTimeout(vig); setTimeout(sig, 450) };
-    u.onerror = () => { clearTimeout(vig); setTimeout(sig, 100) };
-    try { SS.speak(u) } catch (e) { clearTimeout(vig); setTimeout(sig, 100) }
+    let empezo = false, reintento = false;
+    HABLA_HASTA = Date.now() + dura(u.text) * 1.8 + 3000;
+    const vig = setTimeout(() => {
+      if (document.hidden || yo !== VOZ.cola || empezo) return;
+      marcaBloqueo(true);
+      /* la cola de la voz puede quedarse atascada (iOS): se vacía y se repite la frase una vez */
+      if (!reintento) { reintento = true; ent.extra += ' · la voz no arrancó en 2,5 s: se reintenta'; try { SS.cancel() } catch (e) { } setTimeout(() => { if (yo === VOZ.cola && !empezo) { try { SS.speak(u) } catch (e) { } } }, 200) }
+    }, 2500);
+    u.onstart = () => { empezo = true; clearTimeout(vig); marcaBloqueo(false) };
+    u.onend = () => { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 450) };
+    u.onerror = () => { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 100) };
+    try { SS.speak(u) } catch (e) { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 100) }
   };
   /* en iOS, hablar justo después de cancel() deja la voz muda: se espera un instante */
   hayQueCortar ? setTimeout(sig, 150) : sig();
