@@ -73,7 +73,7 @@ def marca_rehecha(id_):
 SIN_NINGUNA = ['bienvenida', 'amanece_inicio', 'amanece_nadie', 'debate', 'gana_pueblo', 'gana_puntos']
 SEGUNDA = ['puntos_abre', 'puntos_cierra', 'sin_votos']
 FASE2 = ('cupido_', 'vidente_', 'bruja_', 'amantes_', 'gana_amantes')
-PRIMERO = ['puntos_abre-1', 'puntos_cierra-1']   # el audio decía «lobos» en vez de «Puntos»: se regeneran antes que nada
+PRIMERO = ['puntos_abre-1', 'puntos_cierra-1', 'empate-1', 'sin_votos-1']   # el audio decía «lobos» en vez de «Puntos»: se regeneran antes que nada
 SOSPECHOSAS = ['amanece_muerto-3', 'amanece_varios-2', 'eliminado-1', 'votacion-2']
 LOTE_FASE = 4   # frases por petición como máximo
 

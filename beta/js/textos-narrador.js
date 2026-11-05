@@ -58,10 +58,10 @@ export const TEXTOS = {
     'La plaza guarda silencio… | todas las miradas apuntan a…'
   ],
   empate: [
-    'El pueblo no se pone de acuerdo… | hoy nadie abandona el pueblo.',
+    'Los ciudadanos no se ponen de acuerdo… | hoy nadie abandona el pueblo.',
     'Los votos se reparten… | y nadie se va.'
   ],
-  sin_votos: ['Nadie se atreve a acusar a nadie… | hoy nadie abandona el pueblo.'],
+  sin_votos: ['Nadie se atreve a acusar… | hoy no hay exiliados en el pueblo.'],
   amantes_mueren: ['Dos corazones latían como uno… | y ahora ambos se han apagado.'],
 
   /* ---- bienvenida, amanecer, debate y final (rich) ---- */

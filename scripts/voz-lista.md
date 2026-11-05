@@ -27,9 +27,9 @@
 | eliminado-1 | tense | 10.3 s | El pueblo ha tomado su decisiÃ³nâ€¦ y seÃ±ala aâ€¦ |
 | eliminado-2 | tense | 5.6 s | Los votos estÃ¡n contadosâ€¦ y el elegido esâ€¦ |
 | eliminado-3 | tense | 5.4 s | La plaza guarda silencioâ€¦ todas las miradas apuntan aâ€¦ |
-| empate-1 | tense | 7.1 s | El pueblo no se pone de acuerdoâ€¦ hoy nadie abandona el pueblo. |
+| empate-1 | tense | — pendiente | Los ciudadanos no se ponen de acuerdoâ€¦ hoy nadie abandona el pueblo. |
 | empate-2 | tense | 4.4 s | Los votos se repartenâ€¦ y nadie se va. |
-| sin_votos-1 | tense | 7.9 s | Nadie se atreve a acusar a nadieâ€¦ hoy nadie abandona el pueblo. |
+| sin_votos-1 | tense | — pendiente | Nadie se atreve a acusarâ€¦ hoy no hay exiliados en el pueblo. |
 | amantes_mueren-1 | tense | 6.5 s | Dos corazones latÃ­an como unoâ€¦ y ahora ambos se han apagado. |
 | bienvenida-1 | rich | — pendiente | Bienvenidos a Punto Duermeâ€¦ un pueblo tranquilo. Demasiado tranquilo. |
 | bienvenida-2 | rich | — pendiente | En este pueblo, cada uno guarda un secretoâ€¦ y esta noche empieza a salir a la luz. |
