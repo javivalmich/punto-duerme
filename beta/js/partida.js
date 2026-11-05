@@ -19,7 +19,7 @@ const NARRADAS = ['anochece', 'noche_cierra', 'amanece', 'resultado'];
 /* ---------- Lo que dice el narrador en cada fase (también sale como subtítulo en todos los móviles) ---------- */
 export const tiempoHablado = s => s < 60 ? s + ' segundos' : s % 60 === 0 ? (s === 60 ? 'un minuto' : s / 60 + ' minutos') : s % 60 === 30 && s < 120 ? 'un minuto y medio' : s % 60 === 30 ? Math.floor(s / 60) + ' minutos y medio' : Math.floor(s / 60) + ' minutos y ' + (s % 60) + ' segundos';
 export function textoFase(V) {
-  const s = V.sala, p = s.publico || {}, sem = s.codigo + s.ronda + s.fase;
+  const s = V.sala, p = s.publico || {}, sem = { j: s.codigo, r: s.ronda };
   switch (s.fase) {
     case 'reparto': return texto('bienvenida', null, sem);
     case 'anochece': return texto(s.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sem);

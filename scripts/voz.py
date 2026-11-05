@@ -10,8 +10,8 @@ Cómo funciona (todo configurable en scripts/voz-config.json):
  - Corta el audio por los silencios: exige tantos trozos como frases y duraciones razonables; si no cuadra, repite solo ese lote.
  - Paso fijo de masterizado de CADA audio (también los futuros): compresión suave → loudness objetivo (-14 LUFS) → limitador de picos.
  - Respeta el límite gratuito (`peticiones_por_dia`, contadas en scripts/.voz-estado.json) y para limpiamente al agotarlo.
- - beta/audio/voz/indice.json solo lista los audios cuando EXISTEN TODOS; mientras falte alguno queda en [] y la app
-   usa solo la voz del navegador (así no se mezclan voces).
+ - beta/audio/voz/indice.json se reescribe SIEMPRE con los audios que existen (tras cada lote y al acabar): la app usa los
+   que hay y, para las frases sin ninguna variante grabada, la voz del navegador. Basta ejecutar el script y publicar.
 Las frases y su entonación están en beta/js/textos-narrador.js (TEXTOS y TONO)."""
 import json, os, re, subprocess, sys, time, datetime
 import numpy as np
@@ -152,7 +152,7 @@ def archivos(): return sorted(f[:-4] for f in os.listdir(DESTINO) if f.endswith(
 
 def escribe_indice(todas):
     ids = archivos(); completas = all(f['id'] in ids for f in todas)
-    json.dump(ids if completas else [], open(os.path.join(DESTINO, 'indice.json'), 'w', encoding='utf-8'))
+    json.dump(ids, open(os.path.join(DESTINO, 'indice.json'), 'w', encoding='utf-8'))
     return completas
 
 def duracion_mp3(ruta): return os.path.getsize(ruta) * 8 / (CFG['bitrate_kbps'] * 1000)

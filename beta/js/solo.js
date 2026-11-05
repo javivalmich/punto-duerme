@@ -91,7 +91,7 @@ function ganador() {
   const p = vivos().filter(j => j.rol === 'punto').length, o = vivos().length - p;
   return p === 0 ? 'ciegos' : p >= o ? 'puntos' : null;
 }
-const sem = () => S.id + S.ronda + S.fase;
+const sem = () => ({ j: S.id, r: S.ronda });
 const pasos = () => NOCHE.filter(p => p.activo && (!p.soloRonda || p.soloRonda === S.ronda) && S.jug.some(j => j.rol === p.rol)).sort((a, b) => a.orden - b.orden);
 const hayTitular = p => vivos().some(j => j.rol === p.rol);
 
@@ -124,12 +124,12 @@ function entra() {
       const p = pasos()[s.k];
       if (!p) return finNoche();
       if (s.paso === 'llama') {
-        habla(texto(p.abre, null, sm + s.k), () => {
+        habla(texto(p.abre, null, sm), () => {
           if (hayTitular(p)) { S.sub.listo = true; render() }
           else luego(() => ir('noche', { k: s.k, paso: 'cierra' }), 3500 + Math.random() * 5000); /* el titular ha muerto: se simula la espera */
         });
       } else if (s.paso === 'cierra') {
-        habla(texto(p.cierra, null, sm + s.k), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), 900));
+        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), 900));
       }
       break;
     }

@@ -3,8 +3,8 @@
    variante, desde 1) podría sustituir a la voz del navegador. Las frases con {nombre} seguirán
    necesitando la voz sintética para el nombre.
 
-   - Cada id tiene una o varias variantes; en cada fase se elige una al azar, pero la misma en todos
-     los móviles (sale del código de la sala, la ronda y la fase), así el subtítulo coincide con la voz.
+   - Cada id tiene una o varias variantes; en cada ronda se elige una al azar (sin repetir la anterior), pero la misma en todos
+     los móviles (sale del código de la partida y de la ronda), así el subtítulo coincide con la voz.
    - «|» es una pausa corta al hablar (no se ve en el subtítulo).
    - La voz buena son audios pregrabados (audio/voz/<id>-<n>.mp3, n = variante desde 1; ver CLAUDE.md → Voz del narrador).
      Por eso ninguna frase lleva nombres ni tiempos: el nombre del jugador sale grande en pantalla y el tiempo, en el reloj.
@@ -104,10 +104,33 @@ export const TONO = {
   bienvenida: 'rich', amanece_inicio: 'rich', amanece_nadie: 'rich', debate: 'rich', gana_pueblo: 'rich', gana_puntos: 'rich', gana_amantes: 'rich'
 };
 
-/* Elige variante de forma determinista (igual en todos los móviles) y rellena {campos} */
-export function texto(id, vars, semilla) {
+/* Elige la variante sin repetir la misma dos veces seguidas en la misma partida, y igual en todos los móviles (así el subtítulo coincide con la voz).
+   `sem` = { j: identificador de la partida, r: ronda }. Por cada id se baraja el orden de las variantes con una semilla de la partida
+   (aleatorio, distinto en cada partida) y se recorre por rondas; al empezar cada vuelta el orden se vuelve a barajar y nunca empieza por la última dicha.
+   Cada frase suena como mucho una vez por ronda, así que dos rondas seguidas nunca repiten variante (con una sola variante, no se puede evitar). */
+function azar(sem) { let h = 2166136261 >>> 0; for (let i = 0; i < sem.length; i++) { h ^= sem.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0 } return () => { h = (h + 0x6D2B79F5) >>> 0; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
+function orden(n, j, id, vuelta, ultima) {
+  const al = azar(j + '|' + id + '|' + vuelta), o = [...Array(n).keys()];
+  for (let i = n - 1; i > 0; i--) { const k = Math.floor(al() * (i + 1)); [o[i], o[k]] = [o[k], o[i]] }
+  if (n > 1 && o[0] === ultima) [o[0], o[1]] = [o[1], o[0]];
+  return o;
+}
+function variante(n, sem, id) {
+  if (n < 2) return 0;
+  const r = Math.max(0, (sem && +sem.r || 0) - 1), j = String(sem && sem.j || ''), vuelta = Math.floor(r / n);
+  let ultima = -1; for (let v = 0; v < vuelta; v++) ultima = orden(n, j, id, v, ultima)[n - 1];
+  return orden(n, j, id, vuelta, ultima)[r % n];
+}
+/* Audios grabados que existen (audio/voz/indice.json). El sorteo solo usa variantes con audio; si una frase no tiene ninguna grabada,
+   se usan todas y habla la voz del navegador. Si el índice aún no ha llegado, lo mismo (llega nada más abrir la app). */
+export let INDICE = null;
+fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
+const grabadas = id => (TEXTOS[id] || []).map((_, i) => i).filter(i => INDICE && INDICE.has(id + '-' + (i + 1)));
+export function texto(id, vars, sem) {
+  /* sin ninguna variante grabada, «primera noche» usa la frase de «cae la noche» si esa sí tiene audio */
+  if (id === 'primera_noche' && !grabadas(id).length && grabadas('noche_cae').length) id = 'noche_cae';
   const v = TEXTOS[id]; if (!v) return '';
-  let h = 0; const s = String(semilla || '') + id; for (let i = 0; i < s.length; i++)h = (h * 31 + s.charCodeAt(i)) | 0;
-  return v[Math.abs(h) % v.length].replace(/\{(\w+)\}/g, (_, k) => vars && vars[k] != null ? vars[k] : '');
+  const pool = grabadas(id), vs = pool.length ? pool : v.map((_, i) => i);
+  return v[vs[variante(vs.length, sem, id)]].replace(/\{(\w+)\}/g, (_, k) => vars && vars[k] != null ? vars[k] : '');
 }
 export const subtitulo = t => t.replace(/\s*\|\s*/g, ' ');
