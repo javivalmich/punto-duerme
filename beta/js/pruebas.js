@@ -6,7 +6,7 @@
 import { $, esc, sheet, closeSheet, toast } from './util.js';
 import { E, accion, soyAnfitrion, soyNarrador, nombreDe } from './estado.js';
 import { rpc, textoError } from './red.js';
-import { diagVoz } from './narrador.js';
+import { diagVoz, TIEMPOS } from './narrador.js';
 
 export const EN_BETA = /\/beta\//.test(location.pathname);
 export const hayPruebas = () => !!(EN_BETA && E.V && soyAnfitrion() && E.V.sala.pruebas && E.V.sala.pruebas.permitido);
@@ -25,6 +25,17 @@ function panelHTML(V, enSala) {
     ${enSala ? '<button class="act sec" data-pr-quitar>Quitar todos los bots</button>' : ''}`;
 }
 /* Estado de la voz (solo beta): versión de la app, audios del índice, contexto de audio y qué ha sonado en cada frase */
+/* Tiempos reales de la noche: fin de «Cae la noche» → inicio de «Los Puntos despiertan» → elección visible; fin de «vuelven a dormir» → inicio del amanecer */
+function tiemposHTML() {
+  const T = TIEMPOS, ult = n => { for (let i = T.length - 1; i >= 0; i--) if (T[i].n === n) return i; return -1 };
+  const entre = (a, b) => { const i = ult(a); if (i < 0) return null; const j = T.findIndex((x, k) => k > i && x.n === b); return j < 0 ? null : (T[j].t - T[i].t) / 1000 };
+  const f = x => x == null ? '—' : x.toFixed(2) + ' s';
+  const resumen = `<div class="sub">Pausa «Cae la noche» → «Los Puntos despiertan»: <b>${f(entre('fin noche_cae', 'inicio puntos_abre'))}</b> (objetivo 5 s)<br>
+    «Los Puntos despiertan» → elección visible: <b>${f(entre('inicio puntos_abre', 'elección visible'))}</b> · fin de «Cae la noche» → elección visible: <b>${f(entre('fin noche_cae', 'elección visible'))}</b><br>
+    Pausa «vuelven a dormir» → amanecer: <b>${f(entre('fin puntos_cierra', 'inicio amanece'))}</b> (objetivo 3 s)</div>`;
+  const filas = T.slice(-10).map((x, k, a) => `${esc(x.h)} ${esc(x.n)}${k ? ' <i>(+' + ((x.t - a[k - 1].t) / 1000).toFixed(2) + ' s)</i>' : ''}`).join('<br>');
+  return `<div class="lbl" style="margin-top:8px">Tiempos de la noche</div>${resumen}${filas ? '<div class="sub">' + filas + '</div>' : ''}`;
+}
 async function vozHTML() {
   const d = diagVoz(); let vers = '?', rem = '?';
   try { vers = (await caches.keys()).map(k => k.replace('punto-duerme-beta-v', 'v')).join(', ') || 'sin caché' } catch (e) { }
@@ -36,6 +47,7 @@ async function vozHTML() {
     <div class="sub">AudioContext: <b>${esc(d.ctx)}</b> · sesión de audio: ${esc(d.sesion)} · ${d.mudo ? 'silenciado' : 'con sonido'}${d.bloqueada ? ' · voz bloqueada' : ''}</div>
     <div class="sub">Voz del navegador: ${esc(d.voz)}</div>
     ${d.hist.length ? `<div class="sub">${d.hist.map(esc).join('<br>')}</div>` : ''}
+    ${tiemposHTML()}
     <div class="lbl" style="margin-top:8px">Últimas frases</div>
     ${d.log.length ? d.log.map(l => `<div class="sub">${esc(l.t)} ${via[l.via] || l.via}: «${esc(l.txt)}»${l.extra ? '<br>&nbsp;&nbsp;' + esc(l.extra) : ''}${l.fin ? '<br>&nbsp;&nbsp;→ avanzó: <b>' + esc(l.fin) + '</b>' : ''}</div>`).join('') : '<div class="sub">Aún no ha hablado el narrador en este móvil.</div>'}</div>`;
 }

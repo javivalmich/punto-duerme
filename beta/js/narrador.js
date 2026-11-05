@@ -48,6 +48,9 @@ fetch('audio/voz/duraciones.json').then(r => r.ok ? r.json() : {}).then(d => { D
 fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
 /* Para el panel de pruebas: qué ha sonado en cada frase (grabada, navegador o error) */
 export const DIAG = { log: [] };
+/* Tiempos reales de la noche (panel de pruebas): cada marca lleva el instante; el panel muestra el salto desde la anterior */
+export const TIEMPOS = [];
+export function marcaT(nombre) { const t = performance.now(), u = TIEMPOS[TIEMPOS.length - 1]; if (u && u.n === nombre) return; /* una marca seguida de sí misma (p. ej. repintados) no cuenta */ TIEMPOS.push({ n: nombre, t, h: new Date().toTimeString().slice(0, 8) }); if (TIEMPOS.length > 30) TIEMPOS.shift() }
 /* Estado PROPIO de la voz del navegador: en iOS `speechSynthesis.speaking` puede quedarse en true para siempre tras un cancel(),
    y si se usara para decidir si «hay algo sonando» se bloquearían el desbloqueo, la reanudación del audio y el botón «Activar la voz». */
 let HABLA_HASTA = 0;
@@ -73,7 +76,7 @@ const urlClip = c => 'audio/voz/' + c + '.mp3';
 export function precargaVoz() { if (INDICE) INDICE.forEach(c => carga(urlClip(c)).catch(() => { })); else setTimeout(precargaVoz, 1500) }
 const paraClip = () => { if (CLIP) { CLIP.parar(); CLIP = null } };
 /* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo) */
-function reproduce(clips, vale, fin, fallo, ent) {
+function reproduce(clips, vale, fin, fallo, ent, empieza) {
   let i = 0;
   const sig = async () => {
     if (!vale()) return;
@@ -86,7 +89,8 @@ function reproduce(clips, vale, fin, fallo, ent) {
       /* contexto suspendido/interrumpido y sin forma de reanudarlo (iOS lo exige con un toque): antes se «reproducía» en silencio y
          la partida seguía muda; ahora se avisa y habla la voz del navegador */
       if (!audioListo()) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ': no se puede reanudar, voz del navegador'; return fallo() }
-      const t0a = relojAudio(), mio = CLIP = suenaBuffer(buf, () => { if (CLIP === mio) CLIP = null; setTimeout(sig, 350) });
+      const t0a = relojAudio(), mio = CLIP = suenaBuffer(buf, () => { if (CLIP === mio) CLIP = null; i >= clips.length ? sig() : setTimeout(sig, 350) /* 0,35 s entre clips, pero ninguno tras el último */ });
+      empieza();
       /* vigilante: si a los 0,7 s el reloj del contexto no ha avanzado, no está sonando nada */
       setTimeout(() => { if (vale() && CLIP === mio && relojAudio() - t0a < 0.2 && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ el reloj del audio está parado (no se oye); voz del navegador'; paraClip(); fallo() } }, 700);
       if (i === 1) ent.extra += ' · contexto ' + estadoAudio().ctx;
@@ -128,28 +132,31 @@ export const PAUSA_ELIMINADO = 7000;     // tras «…y señala a…»: el nombr
 const dura = t => Math.max(1200, t.replace(/\|/g, '').length * 62);
 
 /* Dice un texto («|» = pausa) y llama a fin() al terminar. Una llamada nueva corta la anterior. */
-export function di(texto, fin) {
+export function di(texto, fin, opts) {
   const yo = ++VOZ.cola; paraClip();
-  const t0 = Date.now(); let ent = null, tope = null;
+  const etq = (opts && opts.etq) || '', alEmpezar = opts && opts.empieza;
+  const t0 = Date.now(); let ent = null, tope = null, ya = false;
+  /* el sonido ha empezado de verdad (clip en marcha, voz del navegador hablando o, si no hay voz, ya) */
+  const empieza = () => { if (ya || yo !== VOZ.cola) return; ya = true; if (etq) marcaT('inicio ' + etq); if (alEmpezar) alEmpezar() };
   /* Se sigue en cuanto acaba el audio o, como mucho, cuando se cumple la duración conocida + un margen corto: en iOS el aviso de fin
      del audio puede no llegar nunca, así que el avance no depende solo de él. `porque` queda anotado en el panel de pruebas. */
   const acaba = porque => {
     if (yo !== VOZ.cola || !fin) return;
-    clearTimeout(tope); const f = fin; fin = null;
+    clearTimeout(tope); const f = fin; fin = null; if (etq) marcaT('fin ' + etq);
     if (ent) ent.fin = (porque === 'audio' ? 'fin del audio' : porque === 'limite' ? 'por el límite de tiempo' : porque) + ' (' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)';
     f();
   };
   const fin2 = () => acaba('audio');
   const ponTope = ms => { clearTimeout(tope); tope = setTimeout(() => acaba('limite'), ms) };
   const trozos = String(texto || '').split('|').map(s => s.trim()).filter(Boolean);
-  if (!trozos.length) { setTimeout(() => acaba('sin texto'), 0); return }
+  if (!trozos.length) { empieza(); setTimeout(() => acaba('sin texto'), 0); return }
   const clips = !VOZ.mudo && clipsDe(texto);
   if (clips && clips.length) {
     const limite = limiteClips(clips);
     ponTope(limite);
     cancelaSiHace();
     ent = nota(texto, 'grabada', clips.join(' + ') + ' · límite ' + (limite / 1000).toFixed(1) + ' s');
-    reproduce(clips, () => yo === VOZ.cola, () => acaba('audio'), () => { ent.via = 'navegador'; ent.extra += ' · el audio falló, habla el navegador'; ponTope(Math.max(1500, limite - (Date.now() - t0))); hablaNavegador() }, ent);
+    reproduce(clips, () => yo === VOZ.cola, () => acaba('audio'), () => { ent.via = 'navegador'; ent.extra += ' · el audio falló, habla el navegador'; ponTope(Math.max(1500, limite - (Date.now() - t0))); hablaNavegador() }, ent, empieza);
     return;
   }
   /* respaldo: si el navegador no avisa del final (pasa en pestañas de fondo), se sigue igualmente */
@@ -157,7 +164,7 @@ export function di(texto, fin) {
   ent = nota(texto, VOZ.mudo ? 'silencio' : 'navegador', VOZ.mudo ? 'narrador silenciado' : faltaDe(texto));
   hablaNavegador();
   function hablaNavegador() {
-  if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { ponTope(dura(texto)); return }
+  if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { empieza(); ponTope(dura(texto)); return }
   const hayQueCortar = !!(SS.speaking || SS.pending); cancelaSiHace();
   let i = 0;
   const sig = () => {
@@ -173,8 +180,8 @@ export function di(texto, fin) {
       /* la cola de la voz puede quedarse atascada (iOS): se vacía y se repite la frase una vez */
       if (!reintento) { reintento = true; ent.extra += ' · la voz no arrancó en 2,5 s: se reintenta'; try { SS.cancel() } catch (e) { } setTimeout(() => { if (yo === VOZ.cola && !empezo) { try { SS.speak(u) } catch (e) { } } }, 200) }
     }, 2500);
-    u.onstart = () => { empezo = true; clearTimeout(vig); marcaBloqueo(false) };
-    u.onend = () => { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 450) };
+    u.onstart = () => { empezo = true; clearTimeout(vig); marcaBloqueo(false); empieza() };
+    u.onend = () => { clearTimeout(vig); HABLA_HASTA = 0; i >= trozos.length ? sig() : setTimeout(sig, 450) /* pausa entre trozos, no tras el último */ };
     u.onerror = () => { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 100) };
     try { SS.speak(u) } catch (e) { clearTimeout(vig); HABLA_HASTA = 0; setTimeout(sig, 100) }
   };

@@ -10,7 +10,7 @@ import { E, ahora, jug, nombreDe, soyAnfitrion, soyNarrador, conectado, accion, 
 import { avImg } from './cuenta.js';
 import { ROLES, nombreRol } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
+import { di, calla, silencia, VOZ, duracionTexto, desbloquea, activaVoz, marcaT, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
 import { ptag, avisoPruebas, hayPruebas, abrePanelPruebas, EN_BETA } from './pruebas.js';
 
 export const FASES = { reparto: 'Tu papel', anochece: 'Cae la noche', noche: 'Noche', noche_cierra: 'Noche', amanece: 'Amanece', debate: 'Debate', votacion: 'Votación', resultado: 'Resultado', final: 'Fin de la partida' };
@@ -111,6 +111,7 @@ const CUERPO = {
     const me = V.yo, punto = me.rol === 'punto';
     if (!(me.vivo && punto)) return duerme(V);
     const vp = V.puntos_vivos || 1;
+    marcaT('elección visible');
     const fijo = `<div class="phase"><p class="pt">Elige a la víctima</p><p class="hintrol">${vp > 1 ? 'Elegid a quién eliminar. Tenéis que coincidir.' : 'Elige a quién eliminar.'}</p></div>`;
     /* solo el recuento por víctima («1/2»), nunca quién ha marcado: los Puntos no se conocen */
     const marcas = V.marcas || {}, mia = V.mio.marca, conf = 'confirma' in V.mio;
@@ -174,14 +175,36 @@ function dirige() {
   const s = E.V.sala, k = s.codigo + '|' + s.ronda + '|' + s.fase + '|' + s.desde;
   if (k === DIR.k) return;
   DIR.k = k; DIR.avisos = new Set();
+  /* «Los Puntos despiertan…» ya se dijo por adelantado (ver sigue): solo se mide cuánto tardó en llegar la fase */
+  if (s.fase === 'noche' && PRE.codigo === s.codigo && PRE.ronda === s.ronda) { if (PRE.envio) { SOBRA.rtt = Math.round(.5 * SOBRA.rtt + .5 * Math.min(2500, Math.max(100, Date.now() - PRE.envio))); PRE.envio = 0 } return }
   const p = s.publico || {};
   const t = textoFase(E.V), fase = s.fase, desde = s.desde;
+  const etq = { anochece: 'noche_cae', noche: 'puntos_abre', noche_cierra: 'puntos_cierra', amanece: 'amanece' }[fase];
+  /* La pausa entre frases es la que fijan las constantes, TODO incluido: se descuenta lo que tardan la ida y vuelta al servidor,
+     el arranque de la frase siguiente y su decodificación (se mide en cada partida: `SOBRA[fase]`), para que la siguiente frase
+     empiece justo PAUSA después de acabar la anterior. */
   const sigue = () => {
     if (!NARRADAS.includes(fase)) return;
-    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) accion('avanzar', { p_fase: fase }).catch(() => { }) }, fase === 'anochece' ? PAUSA_CIERRA_OJOS : fase === 'noche_cierra' ? PAUSA_AMANECER : fase === 'resultado' && p.eliminado ? PAUSA_ELIMINADO : PAUSA_FRASES);
+    const pausa = fase === 'anochece' ? PAUSA_CIERRA_OJOS : fase === 'noche_cierra' ? PAUSA_AMANECER : fase === 'resultado' && p.eliminado ? PAUSA_ELIMINADO : PAUSA_FRASES;
+    if (fase === 'anochece') {
+      /* Tras «Cae la noche», la frase de «Los Puntos despiertan…» suena exactamente PAUSA después, sin esperar a que el servidor cambie de
+         fase: el avance se pide un poco antes (lo que tarda la ida y vuelta, medido) y la frase se dice por adelantado. Así la pausa es exacta
+         y la pantalla de elegir víctima aparece a la vez que ella, sin sumar la espera de la red. */
+      const cod = s.codigo, ron = s.ronda, rtt = Math.min(SOBRA.rtt, pausa - 300);
+      PRE.codigo = cod; PRE.ronda = ron;
+      setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) { PRE.envio = Date.now(); accion('avanzar', { p_fase: fase }).catch(() => { }) } }, Math.max(0, pausa - rtt));
+      setTimeout(() => { if (E.V && soyNarrador() && E.V.sala.codigo === cod && E.V.sala.ronda === ron && ['anochece', 'noche'].includes(E.V.sala.fase)) di(texto('puntos_abre', null, { j: cod, r: ron }), null, { etq: 'puntos_abre' }) }, pausa);
+      return;
+    }
+    const descuento = fase === 'noche_cierra' ? Math.min(SOBRA[fase] || 0, pausa - 300) : 0;
+    setTimeout(() => { if (E.V && E.V.sala.fase === fase && E.V.sala.desde === desde) { SOBRA.pend = { fase, t: Date.now() }; accion('avanzar', { p_fase: fase }).catch(() => { }) } }, Math.max(0, pausa - descuento));
   };
-  setTimeout(() => { if (DIR.k === k) di(t, sigue) }, 100);
+  /* al empezar a sonar la frase de la fase que sigue a una pausa medida, se anota cuánto se ha tardado desde que se pidió el avance */
+  const empieza = () => { const q = SOBRA.pend; if (q && (fase === 'amanece' && q.fase === 'noche_cierra')) { SOBRA[q.fase] = Date.now() - q.t; SOBRA.pend = null } };
+  setTimeout(() => { if (DIR.k === k) di(t, sigue, { etq, empieza }) }, 0);
 }
+const PRE = { codigo: '', ronda: -1, envio: 0 };
+const SOBRA = { rtt: 500,  anochece: 300, noche_cierra: 300, pend: null }; /* ms que tarda en sonar la frase siguiente desde que se pide el avance (valor inicial, luego medido) */
 /* ---------- Pasar de fase cuando se acaba el tiempo ---------- */
 const AV = { k: '', t: 0 };
 function programaAvance() {

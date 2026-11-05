@@ -14,7 +14,7 @@
 import { $, esc, sheet, closeSheet, toast, lsGet, lsSet, lsDel, show, tema, plural, cleanName, listaNombres } from './util.js';
 import { ROLES, NOCHE, nombreRol, puntosPara, maxPuntos, sugerirPuntos } from './roles.js';
 import { texto, subtitulo } from './textos-narrador.js';
-import { di, calla, silencia, desbloquea, VOZ, vozGrabada, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_ENTRE_TURNOS, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
+import { di, calla, silencia, desbloquea, VOZ, vozGrabada, marcaT, PAUSA_CIERRA_OJOS, PAUSA_AMANECER, PAUSA_ENTRE_TURNOS, PAUSA_FRASES, PAUSA_ELIMINADO } from './narrador.js';
 import { precarga } from './ambiente.js';
 import { FASES, cartaRolHTML, ICO_VOZ, ICO_MUDO } from './partida.js';
 import { avImg } from './cuenta.js';
@@ -112,31 +112,32 @@ function ir(fase, sub) {
 function entra() {
   const n = S.n, s = S.sub, sm = sem();
   const luego = (fn, ms) => setTimeout(() => { if (S && S.n === n) fn() }, ms);
-  const habla = (t, fin) => { S.narra = t; pintaNarra(); di(t, () => { if (S && S.n === n && fin) fin() }) };
+  const habla = (t, fin, etq) => { S.narra = t; pintaNarra(); di(t, () => { if (S && S.n === n && fin) fin() }, { etq }) };
   switch (S.fase) {
     case 'reparto':
       if (s.i === 0 && s.paso === 'pasa') habla(texto('bienvenida', null, sm));
       break;
     case 'anochece':
-      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), PAUSA_CIERRA_OJOS));
+      habla(texto(S.ronda <= 1 ? 'primera_noche' : 'noche_cae', null, sm), () => luego(() => ir('noche', { k: 0, paso: 'llama' }), PAUSA_CIERRA_OJOS), 'noche_cae');
       break;
     case 'noche': {
       const p = pasos()[s.k];
       if (!p) return finNoche();
       if (s.paso === 'llama') {
+        /* la pantalla «Tengo el móvil» aparece en cuanto empieza la frase, no al acabar */
+        if (hayTitular(p)) { S.sub.listo = true; render(); marcaT('elección visible') }
         habla(texto(p.abre, null, sm), () => {
-          if (hayTitular(p)) { S.sub.listo = true; render() }
-          else luego(() => ir('noche', { k: s.k, paso: 'cierra' }), 3500 + Math.random() * 5000); /* el titular ha muerto: se simula la espera */
-        });
+          if (!hayTitular(p)) luego(() => ir('noche', { k: s.k, paso: 'cierra' }), 3500 + Math.random() * 5000); /* el titular ha muerto: se simula la espera */
+        }, 'puntos_abre');
       } else if (s.paso === 'cierra') {
-        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), pasos()[s.k + 1] ? PAUSA_ENTRE_TURNOS : PAUSA_AMANECER));
+        habla(texto(p.cierra, null, sm), () => luego(() => ir('noche', { k: s.k + 1, paso: 'llama' }), pasos()[s.k + 1] ? PAUSA_ENTRE_TURNOS : PAUSA_AMANECER), 'puntos_cierra');
       }
       break;
     }
     case 'amanece': {
       const m = S.pub.muertos || [];
       habla(texto('amanece_inicio', null, sm) + ' | ' + (m.length > 1 ? texto('amanece_varios', null, sm) : m.length ? texto('amanece_muerto', null, sm) : texto('amanece_nadie', null, sm)),
-        () => luego(() => { ganador() ? ir('final') : ir('debate') }, PAUSA_FRASES));
+        () => luego(() => { ganador() ? ir('final') : ir('debate') }, PAUSA_FRASES), 'amanece');
       break;
     }
     case 'debate':
