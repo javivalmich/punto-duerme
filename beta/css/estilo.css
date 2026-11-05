@@ -12,14 +12,14 @@
 @property --line{syntax:'<color>';inherits:true;initial-value:#2b3470}
 @property --text{syntax:'<color>';inherits:true;initial-value:#eef0ff}
 @property --muted{syntax:'<color>';inherits:true;initial-value:#a4acdc}
-@property --acc{syntax:'<color>';inherits:true;initial-value:#f7c75b}
+@property --acc{syntax:'<color>';inherits:true;initial-value:#e5ae3a}
 @property --accT{syntax:'<color>';inherits:true;initial-value:#1b1740}
 @property --pel{syntax:'<color>';inherits:true;initial-value:#ff7a8c}
 @property --btn{syntax:'<color>';inherits:true;initial-value:#4b5173}
 @property --glow{syntax:'<color>';inherits:true;initial-value:#6e82ff}
 :root{
   --bg:#0b1030; --bg2:#1a2260; --surface:#141b45; --surface2:#1e2760; --line:rgba(160,175,255,.2);
-  --text:#eef0ff; --muted:#a4acdc; --acc:#f7c75b; --accT:#1b1740; --pel:#ff7a8c; --btn:#4b5173; --glow:rgba(110,130,255,.3);
+  --text:#eef0ff; --muted:#a4acdc; --acc:#e5ae3a; --accT:#1b1740; --pel:#ff7a8c; --btn:#4b5173; --glow:rgba(110,130,255,.3);
   --red:var(--acc); --red-d:color-mix(in srgb,var(--acc) 60%,#000); --red-press:color-mix(in srgb,var(--acc) 84%,#000); --visor:#0e0e11;
   --estrellas:1; --niebla:1; --sol-y:120%; --sol-o:0; --luna-o:1;
   color-scheme:dark; box-sizing:border-box;
@@ -86,6 +86,7 @@ body.red .act.sec{background:transparent;border-color:rgba(255,255,255,.55)}
 .hero{text-align:center;padding-top:6px}
 .logo{width:min(62vw,250px,30dvh);aspect-ratio:1;border-radius:28%;background:#0c0c0c;display:block;margin:4px auto 10px;filter:drop-shadow(0 12px 30px rgba(224,18,15,.35))}
 .title{font-weight:900;font-size:clamp(2.5rem,12vw,3.3rem);line-height:1;letter-spacing:.06em}
+.hero .title{font-size:clamp(1.9rem,10.2vw,3.3rem);white-space:nowrap} /* «PUNTO DUERME» es más largo que «PUNTO FALSO»: se ajusta para caber en una línea */
 .tag{color:var(--red);font-weight:600;letter-spacing:.04em;font-size:clamp(.68rem,3.6vw,.82rem);margin-top:8px;white-space:nowrap}
 .lead{color:var(--muted);text-align:center;margin:18px auto 8px;max-width:30ch;font-size:1.05rem}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 18px;margin:16px 0}
@@ -447,19 +448,15 @@ p.vprog b{color:var(--text)}
 }
 .screen,#editor{position:relative;z-index:1}
 
-/* botones: el borde inferior es un tono más oscuro del propio color del botón y se hunde al pulsar */
-.act{background:var(--acc);color:var(--accT);box-shadow:0 5px 0 color-mix(in srgb,var(--acc) 58%,#000)}
-.act.sec{background:var(--surface2);color:var(--text);border:2px solid var(--line);border-bottom-width:2px;box-shadow:0 5px 0 color-mix(in srgb,var(--surface2) 45%,#000)}
-.act.danger{background:var(--surface);color:var(--pel);border:2px solid var(--pel);box-shadow:0 5px 0 color-mix(in srgb,var(--pel) 50%,#000)}
-.act.google{box-shadow:0 5px 0 #a9abb8}
-.act.apple{box-shadow:0 5px 0 #3a3a3e}
-.vbtn{box-shadow:0 4px 0 color-mix(in srgb,var(--surface) 50%,#000)}
-.vbtn.on{box-shadow:0 4px 0 color-mix(in srgb,var(--acc) 58%,#000)}
-.act:is(.prs,:active):not(:disabled){transform:translateY(5px);box-shadow:0 0 0 transparent}
-.vbtn:is(.prs,:active):not(:disabled){transform:translateY(4px);box-shadow:0 0 0 transparent}
-.act:disabled,.vbtn:disabled{opacity:.5;box-shadow:none}
+/* botones como en la app de Punto Falso: sin sombra dura; principal con relleno y resplandor del mismo color, secundarios solo con borde.
+   Tamaño, letra, márgenes y esquinas vienen de la base (.act, igual que Punto Falso). */
+.act{background:var(--acc);color:var(--accT);box-shadow:0 8px 22px color-mix(in srgb,var(--acc) 30%,transparent)}
+.act.sec{background:transparent;color:var(--text);border:2px solid var(--line);box-shadow:none}
+.act.danger{background:transparent;color:var(--pel);border:2px solid var(--pel);box-shadow:none}
+.act.google,.act.apple{box-shadow:none}
+.act:disabled,.vbtn:disabled{opacity:.4;box-shadow:none}
 button:focus-visible,input:focus-visible,summary:focus-visible,.card:focus-visible{outline:3px solid var(--acc)}
-.logo{background:none;filter:drop-shadow(0 10px 26px color-mix(in srgb,var(--acc) 30%,transparent))}
+.logo{width:min(62vw,250px,30dvh);height:auto;aspect-ratio:auto;border-radius:0;background:none;filter:drop-shadow(0 10px 26px color-mix(in srgb,var(--acc) 30%,transparent))}
 .tag{color:var(--acc)}
 .code{color:var(--acc)}
 .err,.sheet .err{color:var(--pel)}
@@ -515,9 +512,7 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 #s-solo .phase{margin-top:10px}
 .step output{white-space:nowrap}
 
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.hero .logo{width:auto;height:auto;max-width:min(82vw,330px);max-height:42dvh;aspect-ratio:auto;border-radius:0;background:none;margin:0 auto 4px;filter:drop-shadow(0 6px 26px color-mix(in srgb,var(--acc) 18%,transparent))}
-.lema{font-weight:300;font-size:clamp(.72rem,3.5vw,.86rem);letter-spacing:.32em;text-indent:.32em;color:var(--muted);text-align:center;margin-top:6px}
+.hero .logo{width:min(62vw,250px);height:auto;max-height:30dvh;object-fit:contain;aspect-ratio:auto;border-radius:0;background:none;margin:4px auto 10px;filter:drop-shadow(0 12px 30px color-mix(in srgb,var(--acc) 30%,transparent))}
 
 .suspense{font-weight:900;font-size:4rem;line-height:1;color:var(--muted);letter-spacing:.2em;animation:pulso 1.2s ease-in-out infinite alternate}
 @keyframes pulso{from{opacity:.3}to{opacity:1}}
