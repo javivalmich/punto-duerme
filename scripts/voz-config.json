@@ -2,7 +2,7 @@
   "modelo": "gemini-3.8-flash-tts",
   "voz": "Riko",
   "temperature": 0.7,
-  "instruccion": "Lee el siguiente texto como un narrador nativo de Madrid, en español de España con acento castellano, sin ningún acento extranjero, pronunciando la c y la z como en España. Tono de narrador de cuento de misterio: voz grave, lenta, con pausas dramáticas:",
+  "instruccion": "Lee el siguiente texto como un narrador nativo de Madrid, en español de España con acento castellano, sin ningún acento extranjero, pronunciando la c y la z como en España. Lee el texto exactamente como está escrito, sin cambiar ninguna palabra. 'Puntos' es el nombre de los asesinos del juego: nunca lo cambies por 'lobos' ni por otra palabra. Tono de narrador de cuento de misterio: voz grave, lenta, con pausas dramáticas:",
   "estilos": {
     "rich": "Style: Rich, velvety, unhurried audiobook narration setting an atmospheric evening scene.",
     "hushed": "Style: Low, mysterious, suspenseful night-time narration, spoken softly but clearly projected so a whole room can hear it. Slow, with dramatic pauses.",

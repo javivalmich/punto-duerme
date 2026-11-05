@@ -37,7 +37,7 @@ async function vozHTML() {
     <div class="sub">Voz del navegador: ${esc(d.voz)}</div>
     ${d.hist.length ? `<div class="sub">${d.hist.map(esc).join('<br>')}</div>` : ''}
     <div class="lbl" style="margin-top:8px">Últimas frases</div>
-    ${d.log.length ? d.log.map(l => `<div class="sub">${esc(l.t)} ${via[l.via] || l.via}: «${esc(l.txt)}»${l.extra ? '<br>&nbsp;&nbsp;' + esc(l.extra) : ''}</div>`).join('') : '<div class="sub">Aún no ha hablado el narrador en este móvil.</div>'}</div>`;
+    ${d.log.length ? d.log.map(l => `<div class="sub">${esc(l.t)} ${via[l.via] || l.via}: «${esc(l.txt)}»${l.extra ? '<br>&nbsp;&nbsp;' + esc(l.extra) : ''}${l.fin ? '<br>&nbsp;&nbsp;→ avanzó: <b>' + esc(l.fin) + '</b>' : ''}</div>`).join('') : '<div class="sub">Aún no ha hablado el narrador en este móvil.</div>'}</div>`;
 }
 function pintaVoz(el) {
   if (!el) return;

@@ -6,9 +6,9 @@
 | noche_cae-2 | hushed | — pendiente | Otra noche mÃ¡s. El pueblo apaga las luces y cierra los ojos. |
 | noche_cae-3 | hushed | 5.1 s | Oscurece de nuevoâ€¦ todos cierran los ojos. |
 | primera_noche-1 | hushed | — pendiente | Cae la primera noche sobre el puebloâ€¦ y todos cierran los ojos. |
-| puntos_abre-1 | hushed | 5.6 s | Los Puntos despiertanâ€¦ y buscan a su prÃ³xima vÃ­ctima. |
+| puntos_abre-1 | hushed | — pendiente | Los Puntos despiertanâ€¦ y buscan a su prÃ³xima vÃ­ctima. |
 | puntos_abre-2 | hushed | — pendiente | En la oscuridad, los Puntos abren los ojosâ€¦ y eligen. |
-| puntos_cierra-1 | hushed | 3.0 s | Los Puntos vuelven a dormir. |
+| puntos_cierra-1 | hushed | — pendiente | Los Puntos vuelven a dormir. |
 | puntos_cierra-2 | hushed | — pendiente | Los Puntos cierran los ojosâ€¦ y la noche sigue su curso. |
 | cupido_abre-1 | hushed | 5.9 s | Cupido despiertaâ€¦ y une dos corazones para siempre. |
 | cupido_cierra-1 | hushed | — pendiente | Cupido vuelve a dormir. |

@@ -73,16 +73,17 @@ def marca_rehecha(id_):
 SIN_NINGUNA = ['bienvenida', 'amanece_inicio', 'amanece_nadie', 'debate', 'gana_pueblo', 'gana_puntos']
 SEGUNDA = ['puntos_abre', 'puntos_cierra', 'sin_votos']
 FASE2 = ('cupido_', 'vidente_', 'bruja_', 'amantes_', 'gana_amantes')
+PRIMERO = ['puntos_abre-1', 'puntos_cierra-1']   # el audio decía «lobos» en vez de «Puntos»: se regeneran antes que nada
 SOSPECHOSAS = ['amanece_muerto-3', 'amanece_varios-2', 'eliminado-1', 'votacion-2']
 LOTE_FASE = 4   # frases por petición como máximo
 
 def prioridad(f, existen, explicitas):
     b = f['base']
-    if f['id'] in explicitas: return 0
+    if f['id'] in explicitas or f['id'] in PRIMERO: return 0
     if f['id'] in SOSPECHOSAS or b.startswith(FASE2): return 4
     n = sum(1 for e in existen if e.rsplit('-', 1)[0] == b)
     if b in SIN_NINGUNA and n == 0 and f['id'] == b + '-1': return 1
-    if b in SEGUNDA and n == 1 and f['id'] == b + '-2': return 2
+    if b in SEGUNDA and n <= 1 and f['id'] == b + '-2': return 2
     return 3
 
 

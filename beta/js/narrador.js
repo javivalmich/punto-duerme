@@ -48,7 +48,7 @@ fetch('audio/voz/duraciones.json').then(r => r.ok ? r.json() : {}).then(d => { D
 fetch('audio/voz/indice.json').then(r => r.ok ? r.json() : []).then(l => { INDICE = new Set(l) }).catch(() => { });
 /* Para el panel de pruebas: qué ha sonado en cada frase (grabada, navegador o error) */
 export const DIAG = { log: [] };
-const nota = (texto, via, extra) => { DIAG.log.unshift({ t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '' }); DIAG.log.length = Math.min(DIAG.log.length, 8) };
+const nota = (texto, via, extra) => { const e = { t: new Date().toTimeString().slice(0, 8), via, txt: String(texto || '').replace(/\s*\|\s*/g, ' ').slice(0, 42), extra: extra || '', fin: '' }; DIAG.log.unshift(e); DIAG.log.length = Math.min(DIAG.log.length, 8); return e };
 export const diagVoz = () => ({ indice: INDICE ? INDICE.size : null, ...estadoAudio(), mudo: VOZ.mudo, bloqueada: VOZ.bloqueada, voz: VOZ.voz ? VOZ.voz.name : 'ninguna', log: DIAG.log });
 function faltaDe(texto) {
   if (!INDICE) return 'índice sin cargar';
@@ -69,7 +69,7 @@ const urlClip = c => 'audio/voz/' + c + '.mp3';
 export function precargaVoz() { if (INDICE) INDICE.forEach(c => carga(urlClip(c)).catch(() => { })); else setTimeout(precargaVoz, 1500) }
 const paraClip = () => { if (CLIP) { CLIP.parar(); CLIP = null } };
 /* Los clips suenan con Web Audio (no con <audio>, que en iOS crea el reproductor de la pantalla de bloqueo) */
-function reproduce(clips, vale, fin, fallo, texto) {
+function reproduce(clips, vale, fin, fallo, ent) {
   let i = 0;
   const sig = async () => {
     if (!vale()) return;
@@ -80,9 +80,9 @@ function reproduce(clips, vale, fin, fallo, texto) {
       await aseguraAudio(1200);
       if (!vale()) return;
       CLIP = suenaBuffer(buf, () => { CLIP = null; setTimeout(sig, 350) });
-      if (i === 1) nota(texto, 'grabada', clips.join(' + ') + ' · contexto ' + estadoAudio().ctx);
-      setTimeout(() => { if (vale() && !audioListo() && !document.hidden) { marcaBloqueo(true); nota(texto, 'error', 'contexto de audio ' + estadoAudio().ctx + ' tras 1,5 s: no se oye') } }, 1500); /* contexto de audio interrumpido por iOS */
-    } catch (e) { nota(texto, 'error', (clips[i - 1] || '') + ': ' + (e && (e.name + ' ' + e.message) || e)); if (vale()) fallo() }
+      if (i === 1) ent.extra += ' · contexto ' + estadoAudio().ctx;
+      setTimeout(() => { if (vale() && !audioListo() && !document.hidden) { marcaBloqueo(true); ent.extra += ' · ⚠ contexto ' + estadoAudio().ctx + ' tras 1,5 s: no se oye' } }, 1500); /* contexto de audio interrumpido por iOS */
+    } catch (e) { ent.extra += ' · ⚠ ' + (clips[i - 1] || '') + ': ' + (e && (e.name + ' ' + e.message) || e); if (vale()) fallo() }
   };
   sig();
 }
@@ -108,23 +108,34 @@ const dura = t => Math.max(1200, t.replace(/\|/g, '').length * 62);
 /* Dice un texto («|» = pausa) y llama a fin() al terminar. Una llamada nueva corta la anterior. */
 export function di(texto, fin) {
   const yo = ++VOZ.cola; paraClip();
-  const acaba = () => { if (yo === VOZ.cola && fin) { const f = fin; fin = null; f() } };
+  const t0 = Date.now(); let ent = null, tope = null;
+  /* Se sigue en cuanto acaba el audio o, como mucho, cuando se cumple la duración conocida + un margen corto: en iOS el aviso de fin
+     del audio puede no llegar nunca, así que el avance no depende solo de él. `porque` queda anotado en el panel de pruebas. */
+  const acaba = porque => {
+    if (yo !== VOZ.cola || !fin) return;
+    clearTimeout(tope); const f = fin; fin = null;
+    if (ent) ent.fin = (porque === 'audio' ? 'fin del audio' : porque === 'limite' ? 'por el límite de tiempo' : porque) + ' (' + ((Date.now() - t0) / 1000).toFixed(1) + ' s)';
+    f();
+  };
+  const fin2 = () => acaba('audio');
+  const ponTope = ms => { clearTimeout(tope); tope = setTimeout(() => acaba('limite'), ms) };
   const trozos = String(texto || '').split('|').map(s => s.trim()).filter(Boolean);
-  if (!trozos.length) { setTimeout(acaba, 0); return }
-  /* respaldo: si el navegador no avisa del final (pasa en pestañas de fondo), se sigue igualmente */
-  const respaldo = setTimeout(acaba, dura(texto) * 1.8 + 3000);
-  const fin2 = () => { clearTimeout(respaldo); acaba() };
+  if (!trozos.length) { setTimeout(() => acaba('sin texto'), 0); return }
   const clips = !VOZ.mudo && clipsDe(texto);
   if (clips && clips.length) {
-    clearTimeout(respaldo); const r2 = setTimeout(acaba, 90000);
+    const limite = limiteClips(clips);
+    ponTope(limite);
     cancelaSiHace();
-    reproduce(clips, () => yo === VOZ.cola, () => { clearTimeout(r2); acaba() }, () => { clearTimeout(r2); setTimeout(acaba, dura(texto) * 1.8 + 3000); nota(texto, 'navegador', 'tras el error'); hablaNavegador() }, texto);
+    ent = nota(texto, 'grabada', clips.join(' + ') + ' · límite ' + (limite / 1000).toFixed(1) + ' s');
+    reproduce(clips, () => yo === VOZ.cola, () => acaba('audio'), () => { ent.via = 'navegador'; ent.extra += ' · el audio falló, habla el navegador'; ponTope(Math.max(1500, limite - (Date.now() - t0))); hablaNavegador() }, ent);
     return;
   }
-  nota(texto, VOZ.mudo ? 'silencio' : 'navegador', VOZ.mudo ? 'narrador silenciado' : faltaDe(texto));
+  /* respaldo: si el navegador no avisa del final (pasa en pestañas de fondo), se sigue igualmente */
+  ponTope(dura(texto) * 1.8 + 3000);
+  ent = nota(texto, VOZ.mudo ? 'silencio' : 'navegador', VOZ.mudo ? 'narrador silenciado' : faltaDe(texto));
   hablaNavegador();
   function hablaNavegador() {
-  if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { clearTimeout(respaldo); setTimeout(acaba, dura(texto)); return }
+  if (VOZ.mudo || !SS || !VOZ.voz && !(SS.getVoices() || []).length) { ponTope(dura(texto)); return }
   const hayQueCortar = !!(SS.speaking || SS.pending); cancelaSiHace();
   let i = 0;
   const sig = () => {
@@ -142,6 +153,8 @@ export function di(texto, fin) {
   hayQueCortar ? setTimeout(sig, 150) : sig();
   }
 }
+/* Tiempo máximo que se espera a que acabe un audio: su duración conocida (+0,35 s de pausa entre clips) + 1,5 s de margen */
+const limiteClips = clips => (clips.reduce((t, c) => t + (DURS[c] || 8) + 0.35, 0) + 1.5) * 1000;
 /* Cuánto durará un texto al decirlo (s): suma de sus audios (+ pausa entre ellos) o, sin audios, una estimación */
 export function duracionTexto(texto) {
   const clips = clipsDe(texto);
