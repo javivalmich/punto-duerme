@@ -511,7 +511,8 @@ ol.steps li:nth-child(3)::before{background:var(--acc);color:var(--accT)}
 #s-solo .phase{margin-top:10px}
 .step output{white-space:nowrap}
 
-.hero .logo{width:min(62vw,250px);height:auto;max-height:30dvh;object-fit:contain;aspect-ratio:auto;border-radius:0;background:none;margin:4px auto 10px;filter:drop-shadow(0 12px 30px color-mix(in srgb,var(--acc) 30%,transparent))}
+.hero .logo{width:auto;height:auto;max-width:min(82vw,330px);max-height:40dvh;object-fit:contain;aspect-ratio:auto;border-radius:0;background:none;margin:0 auto 10px;filter:drop-shadow(0 6px 26px color-mix(in srgb,var(--acc) 18%,transparent))}
+.hero .tag{margin-top:0}
 
 .suspense{font-weight:900;font-size:4rem;line-height:1;color:var(--muted);letter-spacing:.2em;animation:pulso 1.2s ease-in-out infinite alternate}
 @keyframes pulso{from{opacity:.3}to{opacity:1}}
