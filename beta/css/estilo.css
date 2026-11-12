@@ -574,8 +574,7 @@ html.fase-oscura #jAviso .pruebas{display:none}
 /* ==================== Estética oscura (nov 2026): cuento de miedo, tipo «los lobos» ====================
    Se mantiene el cielo y la transición noche → alba → día; cambian letras, botones y cajas.
    Títulos y botones en Cinzel (--f-tit); narrador y textos de ambiente en IM Fell English (--f-cuento).
-   Botones como placas grabadas: relleno con degradado del propio color, línea interior y sombra de un tono más oscuro del mismo color.
-   Cajas con marco fino dorado (--line) y esquinas marcadas (--orn). */
+   Formas: botones y cajas con dos esquinas cortadas en ángulo y brillo de neón (bloque «Formas» al final). */
 
 /* --- cielo: bosque y pueblo en silueta, viñeta --- */
 #cielo .bosque{left:0;right:0;bottom:0;height:min(26vh,210px);opacity:var(--bosque-o);transition:opacity 1.6s}
@@ -613,53 +612,11 @@ h2{font-size:1.85rem}
   background:radial-gradient(circle,var(--acc) 0 2.2px,transparent 2.8px) center/9px 9px no-repeat,linear-gradient(var(--orn),var(--orn)) center/100% 1px no-repeat}
 .hero .logo{filter:drop-shadow(0 0 22px color-mix(in srgb,var(--acc) 26%,transparent)) drop-shadow(0 14px 22px rgba(0,0,0,.6))}
 
-/* --- botones: placas grabadas --- */
-.act{position:relative;border-radius:8px;font-family:var(--f-tit);font-weight:900;font-size:1.05rem;letter-spacing:.07em;padding:17px 14px 16px;
-  color:var(--accT);border:1px solid color-mix(in srgb,var(--acc) 55%,#000);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 72%,#fff6dc) 0,var(--acc) 42%,color-mix(in srgb,var(--acc) 80%,#000) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.5),inset 0 -3px 0 color-mix(in srgb,var(--acc) 60%,#000),0 6px 22px color-mix(in srgb,var(--acc) 26%,transparent);
-  text-shadow:0 1px 0 rgba(255,255,255,.35)}
-.act::before{content:"";position:absolute;inset:4px;border:1px solid color-mix(in srgb,var(--accT) 28%,transparent);border-radius:5px;pointer-events:none}
-.act.sec,.act.danger{color:var(--text);text-shadow:0 1px 0 rgba(0,0,0,.6);border:1px solid color-mix(in srgb,var(--acc) 42%,transparent);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--surface2) 80%,transparent) 0,color-mix(in srgb,var(--surface) 90%,#000) 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -3px 0 rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.35)}
-.act.sec::before{border-color:var(--line)}
-.act.danger{color:var(--pel);border-color:color-mix(in srgb,var(--pel) 70%,transparent)}
-.act.danger::before{border-color:color-mix(in srgb,var(--pel) 25%,transparent)}
-.act.google,.act.apple{font-family:Outfit,system-ui,sans-serif;font-weight:800;letter-spacing:.01em;text-shadow:none;background-image:none}
-.act.google{background:#fff;color:#0e0e11}
-.act.apple{background:#000;color:#fff}
-.act.google::before,.act.apple::before{display:none}
-.act small{font-family:Outfit,system-ui,sans-serif;text-shadow:none}
-.act:disabled{opacity:.42;box-shadow:none}
-:is(.act:not(.sec,.danger,.google,.apple)):is(.prs,:active):not(:disabled){background:linear-gradient(180deg,var(--red-press),color-mix(in srgb,var(--acc) 70%,#000));
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.35);transform:translateY(1px)}
-.act:is(.sec,.danger):is(.prs,:active):not(:disabled){transform:translateY(1px);box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
 .link,.acct button,.legal a{font-family:var(--f-tit);letter-spacing:.03em}
 .link.inline{font-family:inherit;letter-spacing:0}
 .menubtn{border-color:color-mix(in srgb,var(--acc) 40%,transparent);background:color-mix(in srgb,var(--surface) 80%,transparent);color:var(--acc)}
 .menubtn svg{color:var(--acc)}
 
-/* --- cajas con marco y esquinas --- */
-.panel,.narra,.sheet,.ganan,.rolcard,.aviso,.codebox{
-  --c:var(--orn);
-  background-color:color-mix(in srgb,var(--surface) 86%,transparent);
-  background-image:
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    linear-gradient(180deg,rgba(255,255,255,.035),rgba(0,0,0,.28));
-  background-size:14px 2px,2px 14px,14px 2px,2px 14px,14px 2px,2px 14px,14px 2px,2px 14px,100% 100%;
-  background-position:left 5px top 5px,left 5px top 5px,right 5px top 5px,right 5px top 5px,left 5px bottom 5px,left 5px bottom 5px,right 5px bottom 5px,right 5px bottom 5px,0 0;
-  background-repeat:no-repeat;
-  border:1px solid var(--line);border-radius:6px;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset 0 0 34px rgba(0,0,0,.35),0 12px 30px rgba(0,0,0,.4)}
-.codebox{background-color:transparent;box-shadow:none;border-color:transparent;background-image:none}
-.sheet{background-color:var(--surface);border-radius:10px}
-.panel{border-radius:6px}
-
-/* narrador: como una página de cuento */
-.narra{font-family:var(--f-cuento);font-style:italic;font-size:1.12rem;line-height:1.42;text-align:center;padding:16px 18px;border-left:1px solid var(--line);color:color-mix(in srgb,var(--text) 90%,var(--acc))}
-.narra::before{content:"✦";display:block;font-style:normal;font-size:.75rem;color:var(--acc);margin:-4px 0 4px;opacity:.8}
 
 /* pasos de «Cómo se juega» en rombos */
 ol.steps li::before{border-radius:0;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);width:30px;height:30px;top:4px;font-family:var(--f-tit);font-weight:900;
@@ -673,8 +630,6 @@ summary::after{color:var(--acc)}
 .field:focus,.addrow input:focus,input.codein:focus{outline:none;border-color:var(--acc);box-shadow:inset 0 2px 8px rgba(0,0,0,.55),0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
 input.codein{font-weight:900;letter-spacing:.24em;color:var(--acc)}
 input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent)}
-.addrow button{border-radius:6px;font-family:var(--f-tit);font-weight:900;letter-spacing:.05em;background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 72%,#fff6dc),var(--acc) 50%,color-mix(in srgb,var(--acc) 80%,#000));color:var(--accT);
-  box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--acc) 60%,#000)}
 .names .nm,.chip{border-radius:4px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface2) 80%,transparent)}
 .seg button{border-radius:5px;border:1px solid var(--line)}
 .seg button[aria-pressed="true"]{background:var(--acc);color:var(--accT);border-color:var(--acc)}
@@ -688,11 +643,6 @@ input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent)}
 .qr{border-radius:6px;box-shadow:0 0 0 3px var(--surface),0 0 0 4px var(--orn),0 14px 30px rgba(0,0,0,.5)}
 
 /* listas de jugadores y votación */
-.vbtn{border-radius:6px;border:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--surface2) 75%,transparent),color-mix(in srgb,var(--surface) 92%,#000));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),inset 0 -2px 0 rgba(0,0,0,.35)}
-.vbtn.on{color:var(--accT);border-color:color-mix(in srgb,var(--acc) 55%,#000);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 72%,#fff6dc) 0,var(--acc) 45%,color-mix(in srgb,var(--acc) 80%,#000) 100%);
-  box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--acc) 60%,#000),0 4px 18px color-mix(in srgb,var(--acc) 26%,transparent)}
 .av{border-color:color-mix(in srgb,var(--acc) 35%,transparent)}
 .pl .tg,.vbtn .tg{border-radius:4px;font-family:var(--f-tit);letter-spacing:.06em}
 .pl .num{font-family:var(--f-tit);color:var(--acc)}
@@ -703,10 +653,6 @@ input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent)}
 .rolcard{border-radius:8px}
 .rolcard .front b{font-family:var(--f-tit);font-weight:900;letter-spacing:.05em}
 .rolcard .front span{font-family:var(--f-cuento);font-style:italic}
-.rolcard.open{--c:var(--acc);background-color:#070a22;border-color:color-mix(in srgb,var(--acc) 60%,transparent);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 0 60px rgba(0,0,0,.6),0 0 40px color-mix(in srgb,var(--acc) 18%,transparent)}
-.rolcard.open:has(.rolnom.punto){--c:var(--pel);background-color:#2a0716;border-color:color-mix(in srgb,var(--pel) 70%,transparent);
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.5),inset 0 0 70px rgba(0,0,0,.55),0 0 46px color-mix(in srgb,var(--pel) 30%,transparent)}
 .rolnom{font-weight:900;letter-spacing:.08em;background:linear-gradient(180deg,#fff8e6 10%,var(--acc) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(0,0,0,.6))}
 .rolnom.punto{background:linear-gradient(180deg,#ffd0d6 0,var(--pel) 55%,#b0182c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(255,60,80,.45)) drop-shadow(0 3px 0 rgba(0,0,0,.6))}
 .rcorto{font-family:var(--f-tit);font-weight:700;letter-spacing:.03em}
@@ -715,11 +661,6 @@ input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent)}
 /* muertes, final y avisos */
 .muerto b{font-weight:900;letter-spacing:.03em}
 .muerto span{font-family:var(--f-cuento);font-style:italic;font-size:1.05rem;letter-spacing:0}
-.ganan{--c:var(--acc)}
-.ganan.puntos{--c:var(--pel);background-color:#2a0716;background-image:
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    radial-gradient(circle at 50% 30%,#7a1b38 0,#3a0a20 60%,#1a040e 100%)}
 .elimban{border-radius:6px;font-family:var(--f-tit);letter-spacing:.1em}
 .aviso{border-color:var(--acc)}
 .toast{background:var(--surface);color:var(--text);border:1px solid var(--orn);border-radius:6px;box-shadow:0 10px 30px rgba(0,0,0,.6);font-family:var(--f-tit);letter-spacing:.03em}
@@ -732,11 +673,94 @@ input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent)}
 .handname,.bigname{font-weight:900;letter-spacing:.03em;color:var(--text);text-shadow:0 0 22px color-mix(in srgb,var(--acc) 30%,transparent),0 3px 0 rgba(0,0,0,.6)}
 /* cielo más oscuro arriba y con el horizonte iluminado, para que se recorten el bosque y el pueblo */
 #cielo{background:radial-gradient(ellipse at 50% -10%,var(--glow) 0,transparent 55%),linear-gradient(180deg,var(--bg) 0,var(--bg) 38%,color-mix(in srgb,var(--bg2) 85%,var(--bg)) 100%)}
-.rolcard.open,.rolcard.open:has(.rolnom.punto){background-image:
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),
-    radial-gradient(ellipse at 50% 0,rgba(255,255,255,.06),transparent 70%)}
-.rolcard.open,.rolcard.open:has(.rolnom.punto),.ganan,.ganan.puntos{
-  background-size:14px 2px,2px 14px,14px 2px,2px 14px,14px 2px,2px 14px,14px 2px,2px 14px,100% 100%;
-  background-position:left 5px top 5px,left 5px top 5px,right 5px top 5px,right 5px top 5px,left 5px bottom 5px,left 5px bottom 5px,right 5px bottom 5px,right 5px bottom 5px,0 0;
-  background-repeat:no-repeat}
+
+/* ==================== Formas: corte en ángulo + neón ====================
+   Botones y cajas con las esquinas superior izquierda e inferior derecha cortadas (--k).
+   El elemento no pinta fondo ni borde: ::before es el borde (--borde, con el recorte) y ::after el relleno (--relleno, 1,5 px más adentro).
+   El brillo de neón es un filter: drop-shadow del propio elemento (sigue el recorte); en las cajas, una línea de luz arriba.
+   Ojo: estos elementos ya usan ::before y ::after; no añadirles otros pseudoelementos. */
+:is(.act:not(.google,.apple),.vbtn,.panel,.narra,.ganan,.rolcard,.aviso,.menuitem){
+  --k:16px;--borde:color-mix(in srgb,var(--acc) 32%,transparent);
+  --relleno:linear-gradient(90deg,transparent,color-mix(in srgb,var(--acc) 80%,#fff),transparent) 50% 0/70% 1px no-repeat,
+    linear-gradient(180deg,color-mix(in srgb,var(--surface) 82%,transparent),color-mix(in srgb,var(--bg) 90%,transparent));
+  position:relative;isolation:isolate;border:0;border-radius:0;background:none;box-shadow:none}
+:is(.act:not(.google,.apple),.vbtn,.panel,.narra,.ganan,.rolcard,.aviso,.menuitem)::before,
+:is(.act:not(.google,.apple),.vbtn,.panel,.narra,.ganan,.rolcard,.aviso,.menuitem)::after{content:"";position:absolute;pointer-events:none;border:0;border-radius:0}
+:is(.act:not(.google,.apple),.vbtn,.panel,.narra,.ganan,.rolcard,.aviso,.menuitem)::before{inset:0;z-index:-2;background:var(--borde);
+  clip-path:polygon(var(--k) 0,100% 0,100% calc(100% - var(--k)),calc(100% - var(--k)) 100%,0 100%,0 var(--k))}
+:is(.act:not(.google,.apple),.vbtn,.panel,.narra,.ganan,.rolcard,.aviso,.menuitem)::after{inset:1.5px;z-index:-1;background:var(--relleno);
+  clip-path:polygon(calc(var(--k) - .6px) 0,100% 0,100% calc(100% - var(--k) + .6px),calc(100% - var(--k) + .6px) 100%,0 100%,0 calc(var(--k) - .6px))}
+
+/* botones */
+.act{font-family:var(--f-tit);font-weight:900;font-size:1.05rem;letter-spacing:.09em;padding:18px 16px}
+.act:not(.sec,.danger,.google,.apple){--k:14px;color:var(--accT);text-shadow:none;
+  --borde:color-mix(in srgb,var(--acc) 55%,#fff);
+  --relleno:linear-gradient(100deg,color-mix(in srgb,var(--acc) 70%,#fff6dc),var(--acc) 45%,color-mix(in srgb,var(--acc) 82%,#000));
+  filter:drop-shadow(0 0 9px color-mix(in srgb,var(--acc) 60%,transparent)) drop-shadow(0 0 24px color-mix(in srgb,var(--acc) 30%,transparent))}
+.act.sec{--k:14px;color:color-mix(in srgb,var(--acc) 30%,#fff);text-shadow:0 0 10px color-mix(in srgb,var(--acc) 75%,transparent);
+  --borde:color-mix(in srgb,var(--acc) 85%,#fff);
+  --relleno:linear-gradient(180deg,color-mix(in srgb,var(--acc) 12%,var(--surface)),color-mix(in srgb,var(--acc) 5%,var(--bg)));
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--acc) 45%,transparent))}
+.act.danger{--k:14px;color:color-mix(in srgb,var(--pel) 35%,#fff);text-shadow:0 0 10px color-mix(in srgb,var(--pel) 70%,transparent);
+  --borde:var(--pel);--relleno:linear-gradient(180deg,color-mix(in srgb,var(--pel) 12%,var(--surface)),color-mix(in srgb,var(--pel) 5%,var(--bg)));
+  filter:drop-shadow(0 0 6px color-mix(in srgb,var(--pel) 45%,transparent))}
+.act.google,.act.apple{border-radius:14px;font-family:Outfit,system-ui,sans-serif;font-weight:800;letter-spacing:.01em;text-shadow:none}
+.act.google{background:#fff;color:#0e0e11}
+.act.apple{background:#000;color:#fff}
+.act small{font-family:Outfit,system-ui,sans-serif;text-shadow:none}
+.act:disabled{opacity:.42;filter:none}
+/* al pulsar: se hunde 1 px y el relleno se oscurece (o se enciende, en los de neón); nunca pinta un rectángulo detrás */
+:is(.act:not(.google,.apple),.vbtn,.menuitem):is(.prs,:active):not(:disabled){background:none!important;box-shadow:none!important;transform:translateY(1px)}
+.act:not(.sec,.danger,.google,.apple):is(.prs,:active):not(:disabled){--relleno:linear-gradient(100deg,var(--red-press),color-mix(in srgb,var(--acc) 70%,#000))}
+.act.sec:is(.prs,:active):not(:disabled),.vbtn:is(.prs,:active):not(:disabled){--relleno:color-mix(in srgb,var(--acc) 26%,var(--surface))}
+.act.danger:is(.prs,:active):not(:disabled){--relleno:color-mix(in srgb,var(--pel) 26%,var(--surface))}
+.menubtn{border:1.5px solid color-mix(in srgb,var(--acc) 70%,transparent);background:color-mix(in srgb,var(--surface) 70%,transparent);color:var(--acc);
+  box-shadow:0 0 10px color-mix(in srgb,var(--acc) 30%,transparent),inset 0 0 8px color-mix(in srgb,var(--acc) 15%,transparent)}
+.menubtn svg{color:var(--acc)}
+
+/* cajas */
+.panel,.narra{--k:18px;box-shadow:0 -8px 24px -18px var(--acc)}
+.panel{margin:16px 0}
+.aviso{--k:14px;--borde:color-mix(in srgb,var(--acc) 70%,transparent)}
+.narra{font-family:var(--f-cuento);font-style:italic;font-size:1.12rem;line-height:1.42;text-align:center;padding:16px 18px;color:color-mix(in srgb,var(--text) 90%,var(--acc))}
+.sheet{border:0;border-radius:0;clip-path:polygon(20px 0,100% 0,100% calc(100% - 20px),calc(100% - 20px) 100%,0 100%,0 20px);
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--acc) 85%,#fff),transparent) 50% 0/76% 1.5px no-repeat,linear-gradient(180deg,var(--surface2),var(--surface) 40%)}
+.codebox{background:none;border:0;box-shadow:none}
+.menuitem{--k:10px;--borde:var(--line);--relleno:color-mix(in srgb,var(--surface2) 60%,transparent);font-family:var(--f-tit);font-weight:700;letter-spacing:.03em}
+.menuitem:is(.danger,.exit){--borde:var(--pel);color:var(--pel)}
+
+/* lista de votación y elección de víctima */
+.vbtn{--k:12px;--borde:color-mix(in srgb,var(--acc) 22%,transparent);--relleno:linear-gradient(180deg,color-mix(in srgb,var(--surface2) 60%,transparent),color-mix(in srgb,var(--bg) 85%,transparent))}
+.vbtn.on{color:color-mix(in srgb,var(--acc) 30%,#fff);text-shadow:0 0 10px color-mix(in srgb,var(--acc) 70%,transparent);
+  --borde:color-mix(in srgb,var(--acc) 85%,#fff);--relleno:linear-gradient(180deg,color-mix(in srgb,var(--acc) 16%,var(--surface)),color-mix(in srgb,var(--acc) 7%,var(--bg)));
+  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--acc) 50%,transparent))}
+.vbtn.on .av{border-color:var(--acc)}
+.vbtn.on .tg.marca{background:var(--acc);color:var(--accT)}
+
+/* tarjeta del papel y pantalla final */
+.rolcard{--k:22px}
+.rolcard.open{--borde:color-mix(in srgb,var(--acc) 75%,#fff);--relleno:radial-gradient(ellipse at 50% 0,color-mix(in srgb,var(--acc) 14%,#070a22),#070a22 70%);
+  box-shadow:0 0 40px color-mix(in srgb,var(--acc) 22%,transparent)}
+.rolcard.open:has(.rolnom.punto){--borde:var(--pel);--relleno:radial-gradient(circle at 50% 30%,#4a0c22,#1c0410 75%);
+  background:none;border:0;box-shadow:0 0 46px color-mix(in srgb,var(--pel) 32%,transparent)}
+.ganan{--k:20px;--borde:color-mix(in srgb,var(--acc) 75%,#fff);box-shadow:0 0 36px color-mix(in srgb,var(--acc) 18%,transparent)}
+.ganan.puntos{--borde:var(--pel);--relleno:radial-gradient(circle at 50% 30%,#7a1b38 0,#3a0a20 60%,#1a040e 100%);background:none;color:#ffe8ee;
+  box-shadow:0 0 40px color-mix(in srgb,var(--pel) 30%,transparent)}
+
+/* campos y piezas pequeñas: mismo corte, más pequeño */
+.field,.addrow input,input.codein,.sel{border-radius:0;background:rgba(0,0,0,.4);border:1.5px solid color-mix(in srgb,var(--acc) 30%,transparent);color:var(--text);
+  clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);box-shadow:inset 0 2px 8px rgba(0,0,0,.5)}
+.field:focus,.addrow input:focus,input.codein:focus{outline:none;border-color:var(--acc);box-shadow:inset 0 0 14px color-mix(in srgb,var(--acc) 35%,transparent)}
+input.codein{font-weight:900;letter-spacing:.24em;color:var(--acc);text-shadow:0 0 12px color-mix(in srgb,var(--acc) 60%,transparent)}
+input.codein::placeholder{color:color-mix(in srgb,var(--acc) 22%,transparent);text-shadow:none}
+.addrow button{border-radius:0;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);font-family:var(--f-tit);font-weight:900;letter-spacing:.06em;
+  background:linear-gradient(100deg,color-mix(in srgb,var(--acc) 70%,#fff6dc),var(--acc) 50%,color-mix(in srgb,var(--acc) 82%,#000));color:var(--accT)}
+.names .nm,.chip,.seg button{border-radius:0;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px)}
+.step button{background:color-mix(in srgb,var(--surface) 70%,transparent);border:1.5px solid color-mix(in srgb,var(--acc) 55%,transparent);color:var(--acc);
+  box-shadow:0 0 8px color-mix(in srgb,var(--acc) 25%,transparent)}
+.qr{border-radius:0;clip-path:none;box-shadow:0 0 0 1.5px var(--acc),0 0 22px color-mix(in srgb,var(--acc) 45%,transparent)}
+.toast{border-radius:0;border:1.5px solid var(--acc);box-shadow:0 0 18px color-mix(in srgb,var(--acc) 40%,transparent)}
+.elimban{border-radius:0;box-shadow:0 0 16px color-mix(in srgb,var(--pel) 35%,transparent)}
+
+/* de noche con los ojos cerrados nada brilla */
+html.fase-oscura :is(.act,.vbtn,.panel,.narra,.menubtn,.step button){filter:none;box-shadow:none;text-shadow:none}
