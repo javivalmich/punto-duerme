@@ -1,10 +1,10 @@
 /* Punto Duerme (beta): red primero (para recibir siempre lo último publicado) y caché como respaldo.
    Al publicar cambios, sube VERSION: el móvil descarga el sw.js nuevo y borra las cachés viejas. */
-const VERSION = '33';
+const VERSION = '34';
 const CACHE = 'punto-duerme-beta-v' + VERSION;
 const SHELL = ['./', 'index.html', 'manifest.json', 'css/estilo.css', 'js/app.js', 'js/util.js', 'js/red.js', 'js/estado.js', 'js/sala.js', 'js/partida.js',
   'js/roles.js', 'js/narrador.js', 'js/textos-narrador.js', 'js/ambiente.js', 'js/cuenta.js', 'js/cabeza.js', 'js/pruebas.js', 'js/solo.js', 'js/audio.js', 'vendor/qrcode/qrcode.js',
-  'vendor/supabase-js/supabase.js', 'fonts/outfit-latin.woff2', 'img/logo.png', 'img/emblema.png', 'icons/favicon-32.png', 'icons/icon-192.png'];
+  'vendor/supabase-js/supabase.js', 'fonts/outfit-latin.woff2', 'fonts/cinzel-700.woff2', 'fonts/cinzel-900.woff2', 'fonts/fell.woff2', 'fonts/fell-italic.woff2', 'img/logo.png', 'img/emblema.png', 'icons/favicon-32.png', 'icons/icon-192.png'];
 self.addEventListener('install', e => {
   /* la app y, además, todos los audios del narrador (audio/voz/indice.json): así en el modo de un solo móvil sin conexión suena la voz buena */
   const voz = c => fetch('audio/voz/indice.json', { cache: 'reload' }).then(r => r.ok ? r.json() : []).catch(() => [])
