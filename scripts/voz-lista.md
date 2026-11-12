@@ -39,10 +39,10 @@
 | sin_votos-1 | tense | 6.5 s | Nadie se atreve a acusar… hoy no hay exiliados en el pueblo. |
 | amantes_mueren-1 | tense | 6.5 s | Dos corazones latían como uno… y ahora ambos se han apagado. |
 | bienvenida-1 | rich | 7.6 s | Bienvenidos a Punto Duerme… un pueblo tranquilo. Demasiado tranquilo. |
-| bienvenida-2 | rich | — pendiente | En este pueblo, cada uno guarda un secreto… y esta noche empieza a salir a la luz. |
+| bienvenida-2 | rich | 9.1 s | En este pueblo, cada uno guarda un secreto… y esta noche empieza a salir a la luz. |
 | amanece_inicio-1 | rich | 2.2 s | El pueblo amanece de nuevo… |
 | amanece_inicio-2 | rich | — pendiente | Sale el sol sobre las casas del pueblo… |
-| amanece_inicio-3 | rich | — pendiente | La luz del día vuelve a las calles… |
+| amanece_inicio-3 | rich | 3.4 s | La luz del día vuelve a las calles… |
 | amanece_nadie-1 | rich | 3.8 s | Esta noche, por suerte, nadie ha muerto. |
 | amanece_nadie-2 | rich | 5.8 s | La noche ha pasado… y todos siguen aquí. |
 | amanece_nadie-3 | rich | 6.4 s | Nadie ha caído esta noche. Pero el peligro sigue entre vosotros. |
